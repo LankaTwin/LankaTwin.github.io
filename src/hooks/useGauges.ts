@@ -32,7 +32,7 @@ export function useGaugeGeo(which: 'basins' | 'rivers' | 'flood', enabled: boole
     queryFn: ({ signal }) =>
       which === 'flood' ? fetchFloodAreas(signal)
         : which === 'basins' ? fetchGeoLayer(GAUGE_SERVICES.basins, "Name <> 'Placemark'", 'Name', signal)
-          : fetchGeoLayer(GAUGE_SERVICES.rivers, '1=1', '*', signal),
+          : fetchGeoLayer(GAUGE_SERVICES.rivers, '1=1', 'FID', signal),
     enabled,
     staleTime: Infinity,
     gcTime: Infinity,

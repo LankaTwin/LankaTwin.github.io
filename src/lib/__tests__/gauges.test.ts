@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import { buildGauges, dailyRain, gaugeLevel, gaugeSummary, gaugeUnit, queryUrl, slug, type RawReading } from '../gauges'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { buildGauges, dailyRain, fetchGaugeReadings, gaugeLevel, gaugeSummary, gaugeUnit, queryUrl, slug, type RawReading } from '../gauges'
 import { buildAlerts } from '../alerts'
 
 const NOW = Date.UTC(2026, 9, 27, 8, 0) // 13:30 in Colombo
@@ -105,5 +105,27 @@ describe('ArcGIS queries', () => {
   it('asks for JSON without geometry', () => {
     const u = queryUrl('https://example.com/FeatureServer/0', { where: "gauge <> 'X'" })
     expect(u).toContain('/query?f=json&returnGeometry=false&where=gauge%20%3C%3E%20\'X\'')
+  })
+})
+
+describe('paging', () => {
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('reads every row when the service caps pages below the size asked for', async () => {
+    // Like the real layer: 3,678 rows, at most 1000 per response whatever resultRecordCount says.
+    const total = 3678
+    const seen: number[] = []
+    vi.stubGlobal('fetch', async (url: string) => {
+      const u = new URL(url)
+      const off = Number(u.searchParams.get('resultOffset'))
+      seen.push(off)
+      const n = Math.min(1000, Number(u.searchParams.get('resultRecordCount')), total - off)
+      const features = Array.from({ length: Math.max(0, n) }, (_, i) => ({ attributes: { gauge: 'G', CreationDate: off + i } }))
+      return new Response(JSON.stringify({ features, exceededTransferLimit: off + n < total }), { status: 200 })
+    })
+    const rows = await fetchGaugeReadings(4)
+    expect(rows).toHaveLength(total)
+    expect(new Set(rows.map((r) => r.CreationDate)).size).toBe(total)
+    expect(seen).toEqual([0, 1000, 2000, 3000])
   })
 })

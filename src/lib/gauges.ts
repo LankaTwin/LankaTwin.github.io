@@ -102,11 +102,14 @@ export function queryUrl(layer: string, p: Record<string, string | number>) {
   return `${layer}/query?${q({ f: 'json', returnGeometry: 'false', ...p })}`
 }
 
-/** Pages through a query; hosted layers return at most a couple of thousand rows per call. */
-async function queryAll<A>(layer: string, p: Record<string, string | number>, signal?: AbortSignal, pageSize = 2000, maxPages = 8): Promise<A[]> {
+/**
+ * Pages through a query. The gauge layers return at most 1000 rows per call (four days is
+ * ~3,700 rows) and may cap a page below what was asked, so the offset moves by rows received.
+ */
+async function queryAll<A>(layer: string, p: Record<string, string | number>, signal?: AbortSignal, pageSize = 1000, maxPages = 10): Promise<A[]> {
   const out: A[] = []
   for (let page = 0; page < maxPages; page++) {
-    const res = await fetchJson<ArcResponse<A>>(SOURCE, queryUrl(layer, { ...p, resultOffset: page * pageSize, resultRecordCount: pageSize }), signal)
+    const res = await fetchJson<ArcResponse<A>>(SOURCE, queryUrl(layer, { ...p, resultOffset: out.length, resultRecordCount: pageSize }), signal)
     if (res.error) throw new SourceError(SOURCE, res.error.message || `ArcGIS error ${res.error.code}`, res.error.code)
     for (const f of res.features ?? []) out.push(f.attributes)
     if (!res.exceededTransferLimit || !res.features?.length) break
@@ -142,12 +145,18 @@ export function fetchGaugeStations(signal?: AbortSignal) {
   }, signal)
 }
 
-/** A layer as GeoJSON in WGS84, simplified for an island-scale map. */
+/** A layer as GeoJSON in WGS84, simplified for an island-scale map and paged past the layer's row cap. */
 export async function fetchGeoLayer(layer: string, where = '1=1', outFields = '*', signal?: AbortSignal): Promise<FeatureCollection> {
-  const url = `${layer}/query?${q({ f: 'geojson', where, outFields, outSR: 4326, maxAllowableOffset: 0.002, geometryPrecision: 4, resultRecordCount: 4000 })}`
-  const res = await fetchJson<FeatureCollection & { error?: { code: number; message: string } }>(SOURCE, url, signal, 30000)
-  if (res.error) throw new SourceError(SOURCE, res.error.message, res.error.code)
-  return { type: 'FeatureCollection', features: res.features ?? [] }
+  type Page = FeatureCollection & { error?: { code: number; message: string }; properties?: { exceededTransferLimit?: boolean } }
+  const features: FeatureCollection['features'] = []
+  for (let page = 0; page < 6; page++) {
+    const url = `${layer}/query?${q({ f: 'geojson', where, outFields, outSR: 4326, maxAllowableOffset: 0.003, geometryPrecision: 4, resultOffset: features.length })}`
+    const res = await fetchJson<Page>(SOURCE, url, signal, 30000)
+    if (res.error) throw new SourceError(SOURCE, res.error.message, res.error.code)
+    features.push(...(res.features ?? []))
+    if (!res.properties?.exceededTransferLimit || !res.features?.length) break
+  }
+  return { type: 'FeatureCollection', features }
 }
 
 export async function fetchFloodAreas(signal?: AbortSignal): Promise<FeatureCollection> {
