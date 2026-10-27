@@ -10,6 +10,7 @@ import { fmt } from '../lib/metrics'
 import { STATIONS, stationById } from '../lib/places'
 import { colomboNow, colomboToday } from '../lib/time'
 import { useSettings } from '../stores/settings'
+import { useTitle } from '../hooks/useApp'
 
 const VARS = [
   { id: 'temperature_2m', label: 'Temperature', unit: '°C', d: 1 },
@@ -27,6 +28,7 @@ export default function ComparePage() {
   const { compare, setCompare, theme } = useSettings()
   const [v, setV] = useState<(typeof VARS)[number]['id']>('temperature_2m')
   const [past, setPast] = useState<'7' | '30'>('7')
+  useTitle('Compare places')
   const variable = VARS.find((x) => x.id === v)!
   const picked = compare.map(stationById).filter((s): s is NonNullable<typeof s> => !!s)
 

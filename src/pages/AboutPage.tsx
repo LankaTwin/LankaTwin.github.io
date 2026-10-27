@@ -1,5 +1,8 @@
 import { Link } from 'react-router-dom'
 import { useSettings } from '../stores/settings'
+import Landscape from '../components/Landscape'
+import { REPO_URL } from '../components/Layout'
+import { useTitle } from '../hooks/useApp'
 
 const ROADMAP: { phase: string; items: [string, boolean][] }[] = [
   { phase: 'Now', items: [
@@ -8,6 +11,10 @@ const ROADMAP: { phase: string; items: [string, boolean][] }[] = [
     ['Satellite overlays: true colour, NDVI, IMERG rain rate, land surface temperature', true],
     ['Station pages with 24 h / 7 d / 30 d charts, 7-day forecast, rainfall anomaly and solar resource', true],
     ['Compare places; CSV and PNG export; offline-capable install (PWA)', true],
+    ['Search in English, Sinhala and Tamil; “near me”; starred places', true],
+    ['Place photos, weather icons, hourly forecast, UV, monsoon season and nearby rivers', true],
+    ['Daily satellite image of the island; signal notifications; emergency numbers', true],
+    ['Embeddable live widgets for news sites and local councils', true],
   ] },
   { phase: 'Next', items: [
     ['Irrigation Department gauge levels and Met Department observations via scheduled snapshots', false],
@@ -18,14 +25,20 @@ const ROADMAP: { phase: string; items: [string, boolean][] }[] = [
   { phase: 'Later', items: [
     ['Historical playback slider for past events (e.g. the May 2024 floods)', false],
     ['Agriculture stress and reservoir storage indicators', false],
-    ['Embeddable widgets for news sites and local councils', false],
+    ['Background push notifications (needs a small server)', false],
   ] },
 ]
 
 export default function AboutPage() {
   const { refreshMinutes, setRefresh } = useSettings()
+  useTitle('About')
   return (
     <div className="prose-lt mx-auto max-w-3xl px-4 py-6">
+      <div className="mb-6 grid grid-cols-3 gap-2 overflow-hidden rounded-2xl" aria-hidden>
+        <Landscape zone="coast" className="h-28 w-full sm:h-40" />
+        <Landscape zone="hills" className="h-28 w-full sm:h-40" />
+        <Landscape zone="plains" className="h-28 w-full sm:h-40" />
+      </div>
       <h1 className="mb-3 text-3xl font-extrabold tracking-tight">About LankaTwin</h1>
       <p className="text-lg">
         LankaTwin is a free, open-source window onto Sri Lanka’s weather, rivers, air and land — a first, public layer of a digital twin
@@ -63,6 +76,19 @@ export default function AboutPage() {
         </div>
       ))}
 
+      <h2>Shortcuts</h2>
+      <ul>
+        <li><b>/</b> or <b>Ctrl K</b> (<b>⌘ K</b> on a Mac) opens search. Type a town in English, Sinhala or Tamil, a river or a page.</li>
+        <li><b>Near me</b> on the map finds the closest town to you. Your location stays in your browser.</li>
+        <li>The <b>star</b> on any place lists it first on the map panel and in Places.</li>
+      </ul>
+
+      <h2>Images</h2>
+      <p>
+        Place photos come from each town’s Wikipedia article and are credited to their authors on Wikimedia Commons. When a photo can’t load,
+        LankaTwin draws its own picture of the local landscape. Satellite images are NASA MODIS, served by GIBS.
+      </p>
+
       <h2>Settings</h2>
       <p>
         <label className="flex items-center gap-3">
@@ -75,7 +101,7 @@ export default function AboutPage() {
 
       <h2>Contribute</h2>
       <p>
-        The code is MIT-licensed on <a href="https://github.com/AshenWijesingha/LankaTwin">GitHub</a>. Developers, hydrologists, meteorologists
+        The code is MIT-licensed on <a href={REPO_URL}>GitHub</a>. Developers, hydrologists, meteorologists
         and students are welcome — especially to add national data connectors, check model values against local gauges, or translate the interface.
       </p>
     </div>

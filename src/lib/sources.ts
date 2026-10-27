@@ -52,6 +52,11 @@ export const SOURCES: DataSource[] = [
     license: 'ODbL (OSM data), CARTO basemap terms', url: 'https://carto.com/basemaps',
   },
   {
+    name: 'Place photos', provider: 'Wikipedia / Wikimedia Commons', status: 'imagery',
+    provides: 'The lead photo of each town’s Wikipedia article, with author and licence from Commons', refresh: 'Cached for a week',
+    resolution: 'Up to 1280 px', license: 'Per image, mostly CC BY-SA; credited on each photo', url: 'https://commons.wikimedia.org',
+  },
+  {
     name: 'Observations and warnings', provider: 'Department of Meteorology, Sri Lanka', status: 'planned',
     provides: 'Station observations, official forecasts, warnings', refresh: '—', resolution: 'Station network',
     license: 'Check with publisher', url: 'https://www.meteo.gov.lk',

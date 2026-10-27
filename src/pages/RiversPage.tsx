@@ -9,12 +9,14 @@ import { downloadCSV } from '../lib/export'
 import { fmt, inkOn, RIVER_LEVELS } from '../lib/metrics'
 import { colomboToday } from '../lib/time'
 import { useSettings } from '../stores/settings'
+import { useTitle } from '../hooks/useApp'
 
 export default function RiversPage() {
   const { id } = useParams()
   const nav = useNavigate()
   const { rivers, query } = useRivers()
   const theme = useSettings((s) => s.theme)
+  useTitle('Rivers')
 
   const ranked = useMemo(() => [...(rivers ?? [])].sort((a, b) => (b.ratio ?? 0) - (a.ratio ?? 0)), [rivers])
   const sel = rivers?.find((r) => r.point.id === id) ?? ranked[0]

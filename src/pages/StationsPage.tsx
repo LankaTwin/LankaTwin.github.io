@@ -1,24 +1,31 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowDownWideNarrow } from 'lucide-react'
-import { Freshness, SourceProblem, Skeleton } from '../components/ui'
+import { FavoriteButton, Freshness, SourceProblem, Skeleton } from '../components/ui'
+import WeatherIcon from '../components/WeatherIcon'
+import { useTitle } from '../hooks/useApp'
+import { useSettings } from '../stores/settings'
 import { useNowcast } from '../hooks/useLiveData'
 import { colorFor, fmt, inkOn, METRIC_ORDER, METRICS, weatherText, type MetricId } from '../lib/metrics'
 import { downloadCSV } from '../lib/export'
 import { colomboToday } from '../lib/time'
 
-const PROVINCES = ['All', 'Western', 'Central', 'Southern', 'Northern', 'Eastern', 'North Western', 'North Central', 'Uva', 'Sabaragamuwa']
+const PROVINCES = ['All', 'Starred', 'Western', 'Central', 'Southern', 'Northern', 'Eastern', 'North Western', 'North Central', 'Uva', 'Sabaragamuwa']
 
 export default function StationsPage() {
   const { readings, weather, updatedAt } = useNowcast()
   const [sort, setSort] = useState<MetricId | 'name'>('name')
   const [prov, setProv] = useState('All')
+  const favorites = useSettings((s) => s.favorites)
+  useTitle('Places')
   const rows = useMemo(() => {
-    const list = (readings ?? []).filter((r) => prov === 'All' || r.station.province === prov)
+    const list = (readings ?? []).filter((r) => prov === 'All' || (prov === 'Starred' ? favorites.includes(r.station.id) : r.station.province === prov))
+    const fav = (r: (typeof list)[number]) => (favorites.includes(r.station.id) ? 0 : 1)
+    // Starred places stay on top within whichever ranking is chosen.
     return sort === 'name'
-      ? [...list].sort((a, b) => a.station.name.localeCompare(b.station.name))
-      : [...list].sort((a, b) => (b.values[sort] ?? -999) - (a.values[sort] ?? -999))
-  }, [readings, sort, prov])
+      ? [...list].sort((a, b) => fav(a) - fav(b) || a.station.name.localeCompare(b.station.name))
+      : [...list].sort((a, b) => fav(a) - fav(b) || (b.values[sort] ?? -999) - (a.values[sort] ?? -999))
+  }, [readings, sort, prov, favorites])
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">
@@ -28,7 +35,7 @@ export default function StationsPage() {
           <p className="text-muted">Current conditions at all 25 district capitals and Negombo. Select a column heading to rank them.</p>
         </div>
         <div className="flex items-center gap-2">
-          <label className="text-sm text-muted" htmlFor="prov">Province</label>
+          <label className="text-sm text-muted" htmlFor="prov">Show</label>
           <select id="prov" value={prov} onChange={(e) => setProv(e.target.value)} className="rounded-lg border border-line bg-surface px-2 py-1.5 text-sm">
             {PROVINCES.map((p) => <option key={p}>{p}</option>)}
           </select>
@@ -49,6 +56,7 @@ export default function StationsPage() {
           <table className="w-full min-w-[820px] text-sm">
             <thead>
               <tr className="border-b border-line text-left text-muted">
+                <th className="w-8 p-1"><span className="sr-only">Starred</span></th>
                 <th className="p-3 font-medium">
                   <button onClick={() => setSort('name')} className={`hover:text-ink ${sort === 'name' ? 'text-ink' : ''}`}>Place</button>
                 </th>
@@ -63,13 +71,19 @@ export default function StationsPage() {
               </tr>
             </thead>
             <tbody>
+              {rows.length === 0 && (
+                <tr><td colSpan={METRIC_ORDER.length + 3} className="p-8 text-center text-muted">
+                  {prov === 'Starred' ? 'No starred places yet. Tap the star next to a place to add it.' : 'No places match.'}
+                </td></tr>
+              )}
               {rows.map((r) => (
                 <tr key={r.station.id} className="border-b border-line last:border-0 hover:bg-sunken/60">
+                  <td className="p-1 pl-2"><FavoriteButton id={r.station.id} name={r.station.name} /></td>
                   <td className="p-3">
                     <Link to={`/station/${r.station.id}`} className="font-semibold hover:text-lagoon">{r.station.name}</Link>
                     <div className="text-xs text-muted">{r.station.province}</div>
                   </td>
-                  <td className="p-3 text-muted">{weatherText(r.weatherCode)}</td>
+                  <td className="p-3 text-muted"><span className="flex items-center gap-1.5"><WeatherIcon code={r.weatherCode} isDay={r.isDay ?? true} className="size-7 shrink-0" />{weatherText(r.weatherCode)}</span></td>
                   {METRIC_ORDER.map((m) => {
                     const v = r.values[m]
                     const c = colorFor(METRICS[m], v)

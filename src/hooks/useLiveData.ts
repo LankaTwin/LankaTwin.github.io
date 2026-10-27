@@ -9,6 +9,7 @@ export interface StationReading {
   time: string
   values: Record<MetricId, number | null>
   weatherCode: number | null
+  isDay: boolean | null
   windSpeed: number | null
   windDir: number | null
   cloud: number | null
@@ -20,7 +21,7 @@ export interface StationReading {
   rainProbNext24: number | null
   uvMax: number | null
   gustMaxToday: number | null
-  air?: { aqi: number | null; pm25: number | null; pm10: number | null; ozone: number | null; no2: number | null; dust: number | null; time: string }
+  air?: { aqi: number | null; pm25: number | null; pm10: number | null; ozone: number | null; no2: number | null; dust: number | null; uv: number | null; time: string }
 }
 
 export interface RiverReading {
@@ -70,6 +71,7 @@ function toReading(st: Station, r: OMResponse): StationReading {
       pm25: null,
     },
     weatherCode: num(c.weather_code),
+    isDay: c.is_day == null ? null : Number(c.is_day) === 1,
     windSpeed: num(c.wind_speed_10m),
     windDir: num(c.wind_direction_10m),
     cloud: num(c.cloud_cover),
@@ -106,7 +108,7 @@ export function useNowcast() {
       if (a) {
         rd.values.aqi = num(a.us_aqi)
         rd.values.pm25 = num(a.pm2_5)
-        rd.air = { aqi: num(a.us_aqi), pm25: num(a.pm2_5), pm10: num(a.pm10), ozone: num(a.ozone), no2: num(a.nitrogen_dioxide), dust: num(a.dust), time: String(a.time ?? '') }
+        rd.air = { aqi: num(a.us_aqi), pm25: num(a.pm2_5), pm10: num(a.pm10), ozone: num(a.ozone), no2: num(a.nitrogen_dioxide), dust: num(a.dust), uv: num(a.uv_index), time: String(a.time ?? '') }
       }
       return rd
     })

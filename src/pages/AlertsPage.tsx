@@ -1,13 +1,25 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
+import { Bell, BellOff, Phone } from 'lucide-react'
 import AlertList from '../components/AlertList'
 import { Freshness, Skeleton } from '../components/ui'
 import { useNowcast, useRivers } from '../hooks/useLiveData'
 import { buildAlerts, RULES } from '../lib/alerts'
+import { notificationsSupported, useTitle } from '../hooks/useApp'
+import { useSettings } from '../stores/settings'
+
+// National emergency numbers, free from any phone in Sri Lanka.
+const EMERGENCY = [
+  { n: '117', who: 'Disaster Management Centre', what: 'Floods, landslides, cyclones, evacuation' },
+  { n: '119', who: 'Police emergency', what: 'Immediate danger, crime, accidents' },
+  { n: '110', who: 'Fire and rescue', what: 'Fire, trapped people' },
+  { n: '1990', who: 'Suwa Seriya ambulance', what: 'Free emergency ambulance' },
+]
 
 export default function AlertsPage() {
   const { readings, updatedAt, weather } = useNowcast()
   const { rivers } = useRivers()
   const alerts = useMemo(() => buildAlerts(readings, rivers), [readings, rivers])
+  useTitle('Signals')
   return (
     <div className="mx-auto max-w-3xl px-4 py-6">
       <h1 className="text-3xl font-extrabold tracking-tight">Signals</h1>
@@ -18,6 +30,24 @@ export default function AlertsPage() {
       </p>
       {readings ? <AlertList alerts={alerts} /> : <Skeleton className="h-40" />}
       <p className="mt-3 text-xs text-muted"><Freshness at={updatedAt} fetching={weather.isFetching} /></p>
+
+      <NotifyToggle />
+
+      <h2 className="mb-2 mt-8 text-lg font-bold">Emergency numbers</h2>
+      <ul className="grid gap-2 sm:grid-cols-2">
+        {EMERGENCY.map((e) => (
+          <li key={e.n}>
+            <a href={`tel:${e.n}`} className="flex items-center gap-3 rounded-xl border border-line bg-surface p-3 hover:border-rambutan">
+              <span className="grid size-10 shrink-0 place-items-center rounded-full bg-rambutan-soft text-rambutan"><Phone className="size-4" aria-hidden /></span>
+              <span className="min-w-0">
+                <span className="block text-xl font-extrabold leading-tight">{e.n}</span>
+                <span className="block text-sm font-semibold">{e.who}</span>
+                <span className="block text-xs text-muted">{e.what}</span>
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
 
       <h2 className="mb-2 mt-8 text-lg font-bold">Thresholds</h2>
       <div className="overflow-x-auto rounded-xl border border-line bg-surface">
@@ -32,6 +62,39 @@ export default function AlertsPage() {
           </tbody>
         </table>
       </div>
+    </div>
+  )
+}
+
+function NotifyToggle() {
+  const { notify, setNotify } = useSettings()
+  const [perm, setPerm] = useState(() => (notificationsSupported() ? Notification.permission : 'denied'))
+  if (!notificationsSupported()) return null
+  const on = notify && perm === 'granted'
+  const toggle = async () => {
+    if (on) { setNotify(false); return }
+    const p = perm === 'granted' ? perm : await Notification.requestPermission()
+    setPerm(p)
+    setNotify(p === 'granted')
+  }
+  return (
+    <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-surface p-4">
+      <div className="min-w-0 flex-1">
+        <h2 className="flex items-center gap-1.5 font-semibold">{on ? <Bell className="size-4 text-lagoon" aria-hidden /> : <BellOff className="size-4 text-muted" aria-hidden />} Notify me</h2>
+        <p className="text-sm text-muted">
+          {perm === 'denied'
+            ? 'Notifications are blocked for this site in your browser settings.'
+            : 'While LankaTwin is open, get a notification for each new warning anywhere, and for any signal at your starred places.'}
+        </p>
+      </div>
+      <button
+        onClick={toggle}
+        disabled={perm === 'denied'}
+        aria-pressed={on}
+        className={`rounded-lg px-3 py-1.5 text-sm font-semibold disabled:opacity-50 ${on ? 'border border-line bg-surface hover:bg-sunken' : 'bg-lagoon text-canvas hover:brightness-110'}`}
+      >
+        {on ? 'Turn off' : 'Turn on'}
+      </button>
     </div>
   )
 }

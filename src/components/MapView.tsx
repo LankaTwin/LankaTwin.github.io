@@ -42,14 +42,19 @@ interface Props {
   rivers?: RiverReading[]
   selected?: string
   onSelect: (id: string, kind: 'station' | 'river') => void
+  /** Fly here when it changes. */
+  focus?: { lon: number; lat: number; zoom?: number }
+  /** Show a "you are here" dot. */
+  userLocation?: { lon: number; lat: number }
   className?: string
 }
 
-export default function MapView({ readings, rivers, selected, onSelect, className }: Props) {
+export default function MapView({ readings, rivers, selected, onSelect, focus, userLocation, className }: Props) {
   const box = useRef<HTMLDivElement>(null)
   const map = useRef<MLMap | null>(null)
   const stationMarkers = useRef(new Map<string, Marker>())
   const riverMarkers = useRef(new Map<string, Marker>())
+  const userMarker = useRef<Marker | null>(null)
   const onSelectRef = useRef(onSelect)
   onSelectRef.current = onSelect
 
@@ -82,6 +87,7 @@ export default function MapView({ readings, rivers, selected, onSelect, classNam
       map.current = null
       stationMarkers.current.clear()
       riverMarkers.current.clear()
+      userMarker.current = null
     }
   }, [])
 
@@ -124,6 +130,24 @@ export default function MapView({ readings, rivers, selected, onSelect, classNam
     const m = map.current
     if (m?.getLayer('lt-overlay')) m.setPaintProperty('lt-overlay', 'raster-opacity', overlayOpacity)
   }, [overlayOpacity])
+
+  useEffect(() => {
+    if (!focus || !map.current) return
+    map.current.flyTo({ center: [focus.lon, focus.lat], zoom: focus.zoom ?? 9, essential: true, duration: 1200 })
+  }, [focus])
+
+  useEffect(() => {
+    const m = map.current
+    if (!m) return
+    userMarker.current?.remove()
+    userMarker.current = null
+    if (!userLocation) return
+    const el = document.createElement('div')
+    el.className = 'lt-me'
+    el.setAttribute('aria-label', 'Your location')
+    el.title = 'You are here'
+    userMarker.current = new maplibregl.Marker({ element: el }).setLngLat([userLocation.lon, userLocation.lat]).addTo(m)
+  }, [userLocation])
 
   // Station value chips.
   useEffect(() => {

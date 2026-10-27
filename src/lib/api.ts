@@ -64,7 +64,7 @@ export interface OMResponse {
 
 export const CURRENT_VARS = [
   'temperature_2m', 'relative_humidity_2m', 'apparent_temperature', 'precipitation', 'rain',
-  'weather_code', 'cloud_cover', 'wind_speed_10m', 'wind_direction_10m', 'wind_gusts_10m', 'surface_pressure',
+  'weather_code', 'cloud_cover', 'wind_speed_10m', 'wind_direction_10m', 'wind_gusts_10m', 'surface_pressure', 'is_day',
 ]
 
 export async function fetchNowcast(stations: Station[], signal?: AbortSignal) {
@@ -84,7 +84,7 @@ export async function fetchStationSeries(s: Station, pastDays: number, signal?: 
   const url = `https://api.open-meteo.com/v1/forecast?${qs({
     latitude: s.lat,
     longitude: s.lon,
-    hourly: 'temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,wind_speed_10m,wind_gusts_10m,cloud_cover,soil_moisture_0_to_1cm',
+    hourly: 'temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,precipitation_probability,weather_code,is_day,uv_index,wind_speed_10m,wind_gusts_10m,cloud_cover,soil_moisture_0_to_1cm',
     daily: 'weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_gusts_10m_max,uv_index_max,sunrise,sunset',
     past_days: pastDays,
     forecast_days: 7,
@@ -176,4 +176,64 @@ export async function fetchSolar(s: Station, start: string, end: string, signal?
 export function series(block: OMBlock | undefined, key: string): (number | null)[] {
   const v = block?.[key]
   return Array.isArray(v) ? (v as (number | null)[]) : []
+}
+
+// ---------- Wikipedia / Wikimedia Commons (place photos) ----------
+
+export interface PlacePhoto {
+  src: string
+  width: number
+  height: number
+  pageUrl: string
+  fileUrl?: string
+  artist?: string
+  license?: string
+}
+
+interface WikiSummary {
+  type?: string
+  thumbnail?: { source: string; width: number; height: number }
+  originalimage?: { source: string; width: number; height: number }
+  content_urls?: { desktop?: { page?: string } }
+}
+
+interface ImageInfo {
+  query?: { pages?: Record<string, { imageinfo?: { descriptionurl?: string; extmetadata?: Record<string, { value?: string }> }[] }> }
+}
+
+const stripHtml = (s?: string) => (s ? new DOMParser().parseFromString(s, 'text/html').body.textContent?.trim() || undefined : undefined)
+
+/** The lead photo of a Wikipedia article, with its author and licence from Commons. Null when the article has none. */
+export async function fetchPlacePhoto(title: string, signal?: AbortSignal): Promise<PlacePhoto | null> {
+  const t = encodeURIComponent(title.replaceAll(' ', '_'))
+  const sum = await fetchJson<WikiSummary>('Wikipedia', `https://en.wikipedia.org/api/rest_v1/page/summary/${t}`, signal, 12000)
+  const img = sum.thumbnail
+  if (sum.type === 'disambiguation' || !img || !sum.originalimage) return null
+  // Ask for a 1280 px rendition: thumbnails come as .../NNNpx-Name.jpg.
+  const src = img.source.replace(/\/(\d+)px-/, (_m, n) => `/${Math.max(Number(n), Math.min(1280, sum.originalimage!.width))}px-`)
+  const photo: PlacePhoto = { src, width: sum.originalimage.width, height: sum.originalimage.height, pageUrl: sum.content_urls?.desktop?.page ?? `https://en.wikipedia.org/wiki/${t}` }
+  try {
+    const file = decodeURIComponent(sum.originalimage.source.split('/').pop() ?? '')
+    const info = await fetchJson<ImageInfo>('Wikimedia Commons', `https://en.wikipedia.org/w/api.php?${qs({
+      action: 'query', prop: 'imageinfo', iiprop: 'extmetadata|url', titles: `File:${file}`, format: 'json', origin: '*',
+    })}`, signal, 12000)
+    const page = Object.values(info.query?.pages ?? {})[0]
+    const ii = page?.imageinfo?.[0]
+    photo.fileUrl = ii?.descriptionurl
+    photo.artist = stripHtml(ii?.extmetadata?.Artist?.value)
+    photo.license = stripHtml(ii?.extmetadata?.LicenseShortName?.value)
+  } catch { /* the photo still shows, credited to its Wikipedia article */ }
+  return photo
+}
+
+// ---------- NASA GIBS still image of the island ----------
+
+/** A single true-colour MODIS image covering the whole island for one day. */
+export function islandSnapshotUrl(date: string, width = 600) {
+  const [[w, s], [e, n]] = [[79.4, 5.75], [82.05, 9.95]]
+  const height = Math.round((width * (n - s)) / (e - w))
+  return `https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?${qs({
+    SERVICE: 'WMS', REQUEST: 'GetMap', VERSION: '1.1.1', LAYERS: 'MODIS_Terra_CorrectedReflectance_TrueColor',
+    STYLES: '', FORMAT: 'image/jpeg', SRS: 'EPSG:4326', BBOX: `${w},${s},${e},${n}`, WIDTH: width, HEIGHT: height, TIME: date,
+  })}`
 }

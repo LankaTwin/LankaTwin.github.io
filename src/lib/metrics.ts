@@ -75,6 +75,16 @@ export function fmt(v: number | null | undefined, decimals = 0) {
   return v.toLocaleString('en-LK', { maximumFractionDigits: decimals, minimumFractionDigits: decimals })
 }
 
+/** WHO UV index category. */
+export function uvBand(uv: number | null | undefined) {
+  if (uv == null) return '—'
+  if (uv < 3) return 'Low'
+  if (uv < 6) return 'Moderate'
+  if (uv < 8) return 'High'
+  if (uv < 11) return 'Very high'
+  return 'Extreme'
+}
+
 // ---------- Rivers ----------
 
 export type RiverLevel = 'normal' | 'elevated' | 'high' | 'very-high'

@@ -1,17 +1,22 @@
 import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowLeft, Download, Sunrise, Sunset } from 'lucide-react'
+import { ArrowLeft, Code2, Download, Sunrise, Sunset, Waves } from 'lucide-react'
 import ChartCard from '../components/ChartCard'
 import { chartTokens, baseOption } from '../components/Chart'
-import { Freshness, Segmented, SourceProblem, Skeleton, Stat } from '../components/ui'
+import { FavoriteButton, Freshness, Segmented, ShareButton, SourceProblem, Skeleton, Stat } from '../components/ui'
+import PlacePhoto from '../components/PlacePhoto'
+import WeatherIcon from '../components/WeatherIcon'
+import { skyFor } from '../components/Landscape'
+import { useTitle } from '../hooks/useApp'
+import { seasonFor } from '../lib/season'
 import { fetchAirSeries, fetchArchiveDaily, fetchSolar, fetchStationSeries, series } from '../lib/api'
 import { dailySum, timeOption, zip } from '../lib/chartOptions'
 import { downloadCSV } from '../lib/export'
-import { compass, fmt, weatherText } from '../lib/metrics'
-import { stationById } from '../lib/places'
+import { compass, fmt, inkOn, RIVER_LEVELS, uvBand, weatherText } from '../lib/metrics'
+import { riversNear, stationById, type Station } from '../lib/places'
 import { addDays, addHours, colomboNow, colomboToday, compact, dayMonth, dayName } from '../lib/time'
-import { useNowcast } from '../hooks/useLiveData'
+import { useNowcast, useRivers } from '../hooks/useLiveData'
 import { useSettings } from '../stores/settings'
 
 type Range = '24h' | '7d' | '30d'
@@ -28,6 +33,8 @@ export default function StationPage() {
   const theme = useSettings((s) => s.theme)
   const { readings } = useNowcast()
   const now = readings?.find((r) => r.station.id === id)
+  const [embedOpen, setEmbedOpen] = useState(false)
+  useTitle(st?.name ?? 'Unknown place')
 
   const wx = useQuery({
     queryKey: ['station', id, range],
@@ -60,15 +67,35 @@ export default function StationPage() {
         <ArrowLeft className="size-4" aria-hidden /> Back to map
       </Link>
 
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-extrabold tracking-tight">
-            {st.name} <span className="text-2xl font-medium text-muted">{st.si}</span>
-          </h1>
-          <p className="mt-1 text-muted">
-            {st.district} District, {st.province} Province · {st.lat.toFixed(3)}°N {st.lon.toFixed(3)}°E
-            {wx.data?.elevation != null && ` · ${Math.round(wx.data.elevation)} m`}
-          </p>
+      <PlacePhoto key={st.id} station={st} sky={now ? skyFor(now.weatherCode, now.isDay) : undefined} className="h-56 rounded-2xl sm:h-72">
+        <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-4 text-white sm:p-6">
+          <div className="min-w-0">
+            <h1 className="text-4xl font-extrabold tracking-tight drop-shadow sm:text-5xl">{st.name}</h1>
+            <p className="mt-0.5 text-lg font-medium text-white/90 drop-shadow">{st.si} · {st.ta}</p>
+            <p className="mt-1 text-sm text-white/80">
+              {st.district} District, {st.province} Province · {st.lat.toFixed(3)}°N {st.lon.toFixed(3)}°E
+              {wx.data?.elevation != null && ` · ${Math.round(wx.data.elevation)} m`}
+            </p>
+          </div>
+          {now && (
+            <div className="hidden shrink-0 items-center gap-2 rounded-xl bg-black/30 px-3 py-2 backdrop-blur-sm sm:flex">
+              <WeatherIcon code={now.weatherCode} isDay={now.isDay ?? true} className="size-12" />
+              <div>
+                <div className="text-3xl font-extrabold leading-none">{fmt(now.values.temp)}°</div>
+                <div className="text-xs text-white/85">{weatherText(now.weatherCode)}</div>
+              </div>
+            </div>
+          )}
+        </div>
+      </PlacePhoto>
+
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <FavoriteButton id={st.id} name={st.name} className="border border-line bg-surface !p-2" />
+          <ShareButton title={`${st.name} on LankaTwin`} text={now ? `${st.name}: ${fmt(now.values.temp)}°C, ${weatherText(now.weatherCode).toLowerCase()}` : undefined} path={`/station/${st.id}`} />
+          <button onClick={() => setEmbedOpen((o) => !o)} aria-expanded={embedOpen} className="flex items-center gap-1.5 rounded-lg border border-line bg-surface px-3 py-1.5 text-sm font-medium hover:bg-sunken">
+            <Code2 className="size-4" aria-hidden /> Embed
+          </button>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Segmented label="Time range" value={range} onChange={setRange} options={[{ value: '24h', label: '24 hours' }, { value: '7d', label: '7 days' }, { value: '30d', label: '30 days' }]} />
@@ -82,11 +109,16 @@ export default function StationPage() {
         </div>
       </header>
 
+      {embedOpen && <EmbedCode station={st} />}
+
       {now ? (
         <section className="grid grid-cols-2 gap-4 rounded-xl border border-line bg-surface p-4 sm:grid-cols-4 lg:grid-cols-7">
-          <div className="col-span-2 sm:col-span-4 lg:col-span-1">
-            <div className="text-5xl font-extrabold tracking-tight">{fmt(now.values.temp)}°</div>
-            <div className="text-sm text-muted">{weatherText(now.weatherCode)}</div>
+          <div className="col-span-2 flex items-center gap-2 sm:col-span-4 lg:col-span-1">
+            <WeatherIcon code={now.weatherCode} isDay={now.isDay ?? true} className="size-12 shrink-0" />
+            <div>
+              <div className="text-5xl font-extrabold tracking-tight">{fmt(now.values.temp)}°</div>
+              <div className="text-sm text-muted">{weatherText(now.weatherCode)}</div>
+            </div>
           </div>
           <Stat label="Feels like" value={fmt(now.values.feels)} unit="°" sub={`Max today ${fmt(now.feelsMaxToday)}°`} />
           <Stat label="Humidity" value={fmt(now.values.humidity)} unit="%" sub={`Cloud ${fmt(now.cloud)}%`} />
@@ -94,6 +126,10 @@ export default function StationPage() {
           <Stat label="Rain, last 24 h" value={fmt(now.values.rain24, 1)} unit="mm" />
           <Stat label="Rain, next 24 h" value={fmt(now.values.rainNext24, 1)} unit="mm" sub={now.rainProbNext24 != null ? `${now.rainProbNext24}% max chance` : undefined} />
           <Stat label="Air (US AQI)" value={fmt(now.values.aqi)} sub={now.air ? `PM2.5 ${fmt(now.air.pm25)} · PM10 ${fmt(now.air.pm10)}` : undefined} />
+          <Stat label="UV now" value={fmt(now.air?.uv)} sub={`${uvBand(now.air?.uv)} · max today ${fmt(now.uvMax)}`} />
+          <Stat label="Pressure" value={fmt(now.pressure)} unit="hPa" />
+          <Stat label="Today" value={`${fmt(now.tMax)}°`} sub={`low ${fmt(now.tMin)}°`} />
+          <Stat label="Gusts today" value={fmt(now.gustMaxToday)} unit="km/h" />
         </section>
       ) : (
         <Skeleton className="h-24" />
@@ -101,7 +137,14 @@ export default function StationPage() {
 
       {wx.error && <SourceProblem error={wx.error} onRetry={() => wx.refetch()} />}
 
+      <HourlyStrip data={wx.data} nowWall={nowWall} />
+
       <DailyStrip data={wx.data} />
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <SeasonNote />
+        <NearbyRivers station={st} />
+      </div>
 
       <Charts wx={wx.data} aq={aq.data} aqError={aq.error} range={range} win={win} nowWall={nowWall} theme={theme} file={st.id} />
 
@@ -178,6 +221,99 @@ function Charts({ wx, aq, aqError, range, win, nowWall, theme, file }: { wx?: Wx
   )
 }
 
+function HourlyStrip({ data, nowWall }: { data?: Wx; nowWall: string }) {
+  if (!data?.hourly) return <Skeleton className="h-32" />
+  const time = data.hourly.time as string[]
+  const hour = nowWall.slice(0, 13)
+  const start = Math.max(0, time.findIndex((t) => t.slice(0, 13) >= hour))
+  const idx = Array.from({ length: 24 }, (_, k) => start + k).filter((i) => i < time.length)
+  const v = (k: string, i: number) => series(data.hourly, k)[i]
+  return (
+    <section aria-label="Next 24 hours" className="rounded-xl border border-line bg-surface">
+      <h2 className="px-4 pt-3 text-[15px] font-semibold">Next 24 hours</h2>
+      <ol className="flex gap-1 overflow-x-auto px-2 pt-1 pb-3 [scrollbar-width:thin]">
+        {idx.map((i, k) => {
+          const p = v('precipitation_probability', i)
+          const mm = v('precipitation', i)
+          return (
+            <li key={time[i]} className="flex w-[60px] shrink-0 flex-col items-center gap-0.5 rounded-lg px-1 py-1.5 text-center text-xs">
+              <span className="font-medium text-muted">{k === 0 ? 'Now' : time[i].slice(11, 16)}</span>
+              <WeatherIcon code={v('weather_code', i)} isDay={v('is_day', i) !== 0} className="size-8" title={weatherText(v('weather_code', i))} />
+              <span className="text-[15px] font-bold">{fmt(v('temperature_2m', i))}°</span>
+              <span className={`text-[11px] ${(p ?? 0) >= 50 ? 'font-semibold text-lagoon' : 'text-muted'}`}>{fmt(p)}%</span>
+              <span className="text-[11px] text-muted">{mm != null && mm > 0 ? `${fmt(mm, 1)} mm` : '·'}</span>
+            </li>
+          )
+        })}
+      </ol>
+    </section>
+  )
+}
+
+function SeasonNote() {
+  const s = seasonFor(colomboToday())
+  return (
+    <section className="rounded-xl border border-line bg-surface p-4">
+      <div className="text-xs text-muted">Season now · {s.months}</div>
+      <h2 className="text-[15px] font-semibold">{s.name}</h2>
+      <p className="mt-1 text-sm text-muted">{s.summary}</p>
+      <p className="mt-2 text-xs"><span className="text-muted">Usually wettest:</span> {s.wetter}</p>
+    </section>
+  )
+}
+
+function NearbyRivers({ station }: { station: Station }) {
+  const { rivers } = useRivers()
+  const near = riversNear(station, 45)
+  return (
+    <section className="rounded-xl border border-line bg-surface p-4">
+      <h2 className="flex items-center gap-1.5 text-[15px] font-semibold"><Waves className="size-4 text-lagoon" aria-hidden /> Rivers nearby</h2>
+      {near.length === 0 ? (
+        <p className="mt-1 text-sm text-muted">No river point we track lies within 45 km of {station.name}. See all on the <Link to="/rivers" className="text-lagoon underline">Rivers page</Link>.</p>
+      ) : (
+        <ul className="mt-2 space-y-1.5">
+          {near.map(({ point, km }) => {
+            const r = rivers?.find((x) => x.point.id === point.id)
+            const lv = r ? RIVER_LEVELS[r.level] : undefined
+            return (
+              <li key={point.id}>
+                <Link to={`/rivers/${point.id}`} className="flex items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-sm hover:bg-sunken">
+                  <span className="min-w-0"><b className="font-semibold">{point.river}</b> <span className="text-muted">at {point.near} · {Math.round(km)} km</span></span>
+                  {lv ? (
+                    <span className="shrink-0 rounded-md px-1.5 py-0.5 text-xs font-semibold" style={{ background: lv.color, color: inkOn(lv.color) }}>{fmt(r!.today)} m³/s · {lv.label}</span>
+                  ) : <Skeleton className="h-5 w-24" />}
+                </Link>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </section>
+  )
+}
+
+function EmbedCode({ station }: { station: Station }) {
+  const src = `${location.origin}${location.pathname}#/embed/${station.id}`
+  const code = `<iframe src="${src}" width="320" height="180" style="border:0" title="${station.name} weather — LankaTwin" loading="lazy"></iframe>`
+  const [copied, setCopied] = useState(false)
+  return (
+    <section className="grid gap-4 rounded-xl border border-line bg-surface p-4 md:grid-cols-[1fr_auto]">
+      <div className="min-w-0">
+        <h2 className="text-[15px] font-semibold">Embed {station.name} on your site</h2>
+        <p className="mt-1 text-sm text-muted">A live card that refreshes on its own. Paste this into any web page. Add <code>?theme=dark</code> or <code>?theme=light</code> after the place name to fix the theme.</p>
+        <textarea readOnly value={code} rows={3} onFocus={(e) => e.target.select()} className="mt-2 w-full rounded-lg border border-line bg-sunken p-2 font-mono text-xs" />
+        <button
+          onClick={async () => { try { await navigator.clipboard.writeText(code); setCopied(true); setTimeout(() => setCopied(false), 2000) } catch { /* select and copy by hand */ } }}
+          className="mt-2 rounded-lg bg-lagoon px-3 py-1.5 text-sm font-semibold text-canvas hover:brightness-110"
+        >
+          {copied ? 'Copied' : 'Copy code'}
+        </button>
+      </div>
+      <iframe src={src} width={320} height={180} className="rounded-xl border-0" title={`${station.name} embed preview`} loading="lazy" />
+    </section>
+  )
+}
+
 function DailyStrip({ data }: { data?: Wx }) {
   if (!data?.daily) return <Skeleton className="h-28" />
   const time = data.daily.time as string[]
@@ -192,9 +328,13 @@ function DailyStrip({ data }: { data?: Wx }) {
         {days.map((d, i) => (
           <li key={d} className="p-3 text-sm">
             <div className="font-semibold">{i === 0 ? 'Today' : dayName(d)} <span className="font-normal text-muted">{dayMonth(d)}</span></div>
-            <div className="mt-1 h-10 text-xs leading-tight text-muted">{weatherText(v('weather_code', i))}</div>
+            <div className="mt-1 flex h-12 items-center gap-1.5">
+              <WeatherIcon code={v('weather_code', i)} className="size-9 shrink-0" />
+              <span className="text-xs leading-tight text-muted">{weatherText(v('weather_code', i))}</span>
+            </div>
             <div className="text-lg font-bold">{fmt(v('temperature_2m_max', i))}° <span className="text-sm font-medium text-muted">{fmt(v('temperature_2m_min', i))}°</span></div>
             <div className="text-xs"><span className="font-semibold text-lagoon">{fmt(v('precipitation_sum', i), 1)} mm</span> <span className="text-muted">· {fmt(v('precipitation_probability_max', i))}%</span></div>
+            <div className="text-[11px] text-muted">UV {fmt(v('uv_index_max', i))} · gusts {fmt(v('wind_gusts_10m_max', i))}</div>
             <div className="mt-1 flex gap-2 text-[11px] text-muted">
               <span className="inline-flex items-center gap-0.5"><Sunrise className="size-3" aria-label="Sunrise" />{sun('sunrise', i)}</span>
               <span className="inline-flex items-center gap-0.5"><Sunset className="size-3" aria-label="Sunset" />{sun('sunset', i)}</span>

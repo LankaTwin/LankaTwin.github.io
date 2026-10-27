@@ -1,4 +1,5 @@
 import { SOURCES, type SourceStatus } from '../lib/sources'
+import { useTitle } from '../hooks/useApp'
 
 const STATUS: Record<SourceStatus, { label: string; cls: string }> = {
   live: { label: 'Live in app', cls: 'bg-paddy-soft text-paddy' },
@@ -7,6 +8,7 @@ const STATUS: Record<SourceStatus, { label: string; cls: string }> = {
 }
 
 export default function SourcesPage() {
+  useTitle('Data sources')
   return (
     <div className="mx-auto max-w-5xl px-4 py-6">
       <h1 className="text-3xl font-extrabold tracking-tight">Data sources</h1>
