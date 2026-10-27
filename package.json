@@ -9,11 +9,12 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc -b --noEmit"
+    "typecheck": "tsc -b --noEmit",
+    "test": "vitest run",
+    "og-image": "node scripts/og-image.mjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.105.0",
-    "date-fns": "^4.4.0",
     "echarts": "^6.1.0",
     "lucide-react": "^1.61.0",
     "maplibre-gl": "^6.16.0",
@@ -31,6 +32,7 @@
     "tailwindcss": "^4.3.3",
     "typescript": "^7.0.2",
     "vite": "^8.3.5",
-    "vite-plugin-pwa": "^2.0.0"
+    "vite-plugin-pwa": "^2.0.0",
+    "vitest": "^5.0.5"
   }
 }

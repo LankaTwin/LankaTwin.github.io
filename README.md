@@ -1,5 +1,9 @@
 # LankaTwin
 
+![LankaTwin — live weather, rivers and air for Sri Lanka](public/og-image.png)
+
+**Live at [lankatwin.github.io](https://lankatwin.github.io/)**
+
 **A free, open-source window onto Sri Lanka's weather, rivers, air and land — running entirely in your browser.**
 
 LankaTwin is the public visualisation layer of a climate and resource digital twin for Sri Lanka. It pulls live, open data
@@ -12,7 +16,13 @@ straight from the publishers into an interactive map and charts, with no server 
 - **Satellite overlays** from NASA GIBS: MODIS true colour (any date), 8-day NDVI, IMERG rain rate, land surface temperature.
 - **Place pages**: 24 h / 7 d / 30 d charts for temperature, rain, humidity, wind, air quality and soil moisture; a 7-day forecast; this month's rain against the past decade (ERA5); and solar energy received (NASA POWER).
 - **Compare** up to five places on one chart; **signals** for heavy rain, heat stress, strong gusts, poor air and rising rivers.
-- CSV and PNG export, dark mode, mobile layout, installable and readable offline (PWA).
+- **Search** (press `/` or `Ctrl K`) in English, Sinhala or Tamil; **Near me** finds your closest town; **star** places to keep them on top.
+- **Images**: a photo of every town from Wikipedia (credited to its Commons author), illustrated landscapes when offline, weather icons, and a daily MODIS satellite image of the whole island.
+- **Forecast detail**: next-24-hour strip, 7-day outlook with UV and gusts, the current monsoon season, and the rivers near each town.
+- **Share and embed**: share any place, or paste a live `<iframe>` widget into another site (`#/embed/<place>`).
+- **Safety**: emergency numbers (117, 119, 110, 1990) and opt-in browser notifications for new warnings while the app is open.
+- **Three languages**: the whole interface in English, Sinhala and Tamil, including place and river names, weather descriptions, dates and chart axes. See [`docs/TRANSLATIONS.md`](docs/TRANSLATIONS.md) to help review the translations.
+- CSV and PNG export, dark mode, mobile layout, offline banner, installable and readable offline (PWA).
 
 > LankaTwin is unofficial. For warnings follow the Department of Meteorology and the Disaster Management Centre (hotline 117).
 
@@ -21,13 +31,16 @@ straight from the publishers into an interactive map and charts, with no server 
 ```bash
 npm install
 npm run dev
+npm test          # unit tests
+npm run og-image  # redraw public/og-image.png (needs Playwright)
 ```
 
 ## Deploy to GitHub Pages
 
-1. Push this repository to GitHub as `LankaTwin`.
-2. In **Settings → Pages**, set **Source** to **GitHub Actions**.
-3. Push to `main`. `.github/workflows/deploy.yml` builds and publishes to `https://<user>.github.io/LankaTwin/`.
+1. In **Settings → Pages**, set **Source** to **GitHub Actions**.
+2. Push to `main`. `.github/workflows/deploy.yml` tests, builds and publishes to `https://lankatwin.github.io/`.
+
+Pull requests run `.github/workflows/ci.yml`: typecheck, unit tests (`npm test`) and a production build.
 
 No base-path configuration is needed: the build uses relative asset paths and hash routing, so it also works on a custom domain.
 
@@ -43,6 +56,7 @@ Vite · React 19 · TypeScript · Tailwind CSS 4 · MapLibre GL · Apache EChart
 | [NASA POWER](https://power.larc.nasa.gov) | Daily solar irradiance |
 | [NASA GIBS](https://nasa-gibs.github.io/gibs-api-docs/) | Satellite overlays |
 | [CARTO](https://carto.com/basemaps) / OpenStreetMap | Basemap |
+| [Wikipedia](https://en.wikipedia.org) / [Wikimedia Commons](https://commons.wikimedia.org) | Place photos, credited per image |
 
 Full licences and attribution are on the in-app **Sources** page. National sources (Meteorology, Irrigation, DMC, data.gov.lk) are
 planned through scheduled snapshots — see [`docs/DATA_CONNECTORS.md`](docs/DATA_CONNECTORS.md).
@@ -51,6 +65,7 @@ planned through scheduled snapshots — see [`docs/DATA_CONNECTORS.md`](docs/DAT
 
 - [Architecture](docs/ARCHITECTURE.md)
 - [Adding a data connector](docs/DATA_CONNECTORS.md)
+- [Translations](docs/TRANSLATIONS.md)
 - [Contributing](CONTRIBUTING.md)
 
 ## Licence

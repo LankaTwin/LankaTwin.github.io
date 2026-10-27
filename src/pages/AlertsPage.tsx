@@ -1,37 +1,100 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
+import { Bell, BellOff, Phone } from 'lucide-react'
 import AlertList from '../components/AlertList'
 import { Freshness, Skeleton } from '../components/ui'
 import { useNowcast, useRivers } from '../hooks/useLiveData'
 import { buildAlerts, RULES } from '../lib/alerts'
+import { notificationsSupported, useTitle } from '../hooks/useApp'
+import { useSettings } from '../stores/settings'
+import { rich, type Key } from '../i18n/core'
+import { useT } from '../i18n/useT'
+
+// National emergency numbers, free from any phone in Sri Lanka.
+const EMERGENCY = ['117', '119', '110', '1990']
 
 export default function AlertsPage() {
   const { readings, updatedAt, weather } = useNowcast()
   const { rivers } = useRivers()
-  const alerts = useMemo(() => buildAlerts(readings, rivers), [readings, rivers])
+  const { t, lang } = useT()
+  const alerts = useMemo(() => buildAlerts(readings, rivers, lang), [readings, rivers, lang])
+  useTitle(t('signals.title'))
   return (
     <div className="mx-auto max-w-3xl px-4 py-6">
-      <h1 className="text-3xl font-extrabold tracking-tight">Signals</h1>
+      <h1 className="text-3xl font-extrabold tracking-tight">{t('signals.title')}</h1>
       <p className="mb-5 mt-1 text-muted">
-        Places where model data crosses a screening threshold. These are early heads-ups, not official warnings — for those, follow the
-        {' '}<a className="text-lagoon underline" href="https://www.meteo.gov.lk">Department of Meteorology</a> and the
-        {' '}<a className="text-lagoon underline" href="https://www.dmc.gov.lk">Disaster Management Centre</a> (hotline 117).
+        {rich(t('signals.intro'), {
+          dom: <a className="text-lagoon underline" href="https://www.meteo.gov.lk">{t('common.dom')}</a>,
+          dmc: <a className="text-lagoon underline" href="https://www.dmc.gov.lk">{t('common.dmc')}</a>,
+        })}
       </p>
       {readings ? <AlertList alerts={alerts} /> : <Skeleton className="h-40" />}
       <p className="mt-3 text-xs text-muted"><Freshness at={updatedAt} fetching={weather.isFetching} /></p>
 
-      <h2 className="mb-2 mt-8 text-lg font-bold">Thresholds</h2>
+      <NotifyToggle />
+
+      <h2 className="mb-2 mt-8 text-lg font-bold">{t('emergency.title')}</h2>
+      <ul className="grid gap-2 sm:grid-cols-2">
+        {EMERGENCY.map((n) => (
+          <li key={n}>
+            <a href={`tel:${n}`} className="flex items-center gap-3 rounded-xl border border-line bg-surface p-3 hover:border-rambutan">
+              <span className="grid size-10 shrink-0 place-items-center rounded-full bg-rambutan-soft text-rambutan"><Phone className="size-4" aria-hidden /></span>
+              <span className="min-w-0">
+                <span className="block text-xl font-extrabold leading-tight">{n}</span>
+                <span className="block text-sm font-semibold">{t(`emergency.${n}.who` as Key)}</span>
+                <span className="block text-xs text-muted">{t(`emergency.${n}.what` as Key)}</span>
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+
+      <h2 className="mb-2 mt-8 text-lg font-bold">{t('thresholds.title')}</h2>
       <div className="overflow-x-auto rounded-xl border border-line bg-surface">
         <table className="w-full text-sm">
-          <thead><tr className="border-b border-line text-left text-muted"><th className="p-3 font-medium">Signal</th><th className="p-3 font-medium">Watch</th><th className="p-3 font-medium">Warning</th><th className="p-3 font-medium">Based on</th></tr></thead>
+          <thead><tr className="border-b border-line text-left text-muted"><th className="p-3 font-medium">{t('thresholds.signal')}</th><th className="p-3 font-medium">{t('thresholds.watch')}</th><th className="p-3 font-medium">{t('thresholds.warning')}</th><th className="p-3 font-medium">{t('thresholds.basedOn')}</th></tr></thead>
           <tbody className="[&_td]:p-3 [&_tr]:border-b [&_tr]:border-line [&_tr:last-child]:border-0">
-            <tr><td>Rain</td><td>{RULES.rain.watch} mm / 24 h</td><td>{RULES.rain.warning} mm / 24 h</td><td className="text-muted">Past or next 24 h, whichever is higher</td></tr>
-            <tr><td>Heat</td><td>Feels like {RULES.heat.watch}°C</td><td>{RULES.heat.warning}°C</td><td className="text-muted">Apparent temperature, today and tomorrow</td></tr>
-            <tr><td>Wind</td><td>Gusts {RULES.gust.watch} km/h</td><td>{RULES.gust.warning} km/h</td><td className="text-muted">Current and today’s max gust</td></tr>
-            <tr><td>Air</td><td>US AQI {RULES.aqi.watch}</td><td>{RULES.aqi.warning}</td><td className="text-muted">CAMS model, current hour</td></tr>
-            <tr><td>Rivers</td><td>Peak 1.8× median</td><td>3× median</td><td className="text-muted">GloFAS 10-day peak vs 30-day median</td></tr>
+            <tr><td>{t('thresholds.rain')}</td><td>{t('thresholds.rainValue', { n: RULES.rain.watch })}</td><td>{t('thresholds.rainValue', { n: RULES.rain.warning })}</td><td className="text-muted">{t('thresholds.rainBasis')}</td></tr>
+            <tr><td>{t('thresholds.heat')}</td><td>{t('thresholds.heatWatch', { n: RULES.heat.watch })}</td><td>{t('thresholds.heatWarn', { n: RULES.heat.warning })}</td><td className="text-muted">{t('thresholds.heatBasis')}</td></tr>
+            <tr><td>{t('thresholds.wind')}</td><td>{t('thresholds.gustWatch', { n: RULES.gust.watch })}</td><td>{t('thresholds.gustWarn', { n: RULES.gust.warning })}</td><td className="text-muted">{t('thresholds.windBasis')}</td></tr>
+            <tr><td>{t('thresholds.air')}</td><td>{t('thresholds.aqiWatch', { n: RULES.aqi.watch })}</td><td>{RULES.aqi.warning}</td><td className="text-muted">{t('thresholds.airBasis')}</td></tr>
+            <tr><td>{t('thresholds.rivers')}</td><td>{t('thresholds.riverWatch', { n: 1.8 })}</td><td>{t('thresholds.riverWarn', { n: 3 })}</td><td className="text-muted">{t('thresholds.riverBasis')}</td></tr>
           </tbody>
         </table>
       </div>
+    </div>
+  )
+}
+
+function NotifyToggle() {
+  const { notify, setNotify } = useSettings()
+  const { t } = useT()
+  const [perm, setPerm] = useState(() => (notificationsSupported() ? Notification.permission : 'denied'))
+  if (!notificationsSupported()) return null
+  const on = notify && perm === 'granted'
+  const toggle = async () => {
+    if (on) { setNotify(false); return }
+    const p = perm === 'granted' ? perm : await Notification.requestPermission()
+    setPerm(p)
+    setNotify(p === 'granted')
+  }
+  return (
+    <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-surface p-4">
+      <div className="min-w-0 flex-1">
+        <h2 className="flex items-center gap-1.5 font-semibold">{on ? <Bell className="size-4 text-lagoon" aria-hidden /> : <BellOff className="size-4 text-muted" aria-hidden />} {t('notify.title')}</h2>
+        <p className="text-sm text-muted">
+          {perm === 'denied'
+            ? t('notify.blocked')
+            : t('notify.desc')}
+        </p>
+      </div>
+      <button
+        onClick={toggle}
+        disabled={perm === 'denied'}
+        aria-pressed={on}
+        className={`rounded-lg px-3 py-1.5 text-sm font-semibold disabled:opacity-50 ${on ? 'border border-line bg-surface hover:bg-sunken' : 'bg-lagoon text-canvas hover:brightness-110'}`}
+      >
+        {t(on ? 'notify.off' : 'notify.on')}
+      </button>
     </div>
   )
 }

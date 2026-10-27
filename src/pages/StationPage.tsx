@@ -1,17 +1,24 @@
 import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowLeft, Download, Sunrise, Sunset } from 'lucide-react'
+import { ArrowLeft, Code2, Download, Sunrise, Sunset, Waves } from 'lucide-react'
 import ChartCard from '../components/ChartCard'
 import { chartTokens, baseOption } from '../components/Chart'
-import { Freshness, Segmented, SourceProblem, Skeleton, Stat } from '../components/ui'
+import { FavoriteButton, Freshness, Segmented, ShareButton, SourceProblem, Skeleton, Stat } from '../components/ui'
+import PlacePhoto from '../components/PlacePhoto'
+import WeatherIcon from '../components/WeatherIcon'
+import { skyFor } from '../components/Landscape'
+import { useTitle } from '../hooks/useApp'
+import SeasonCard from '../components/SeasonCard'
+import { rich, type Key } from '../i18n/core'
+import { useT } from '../i18n/useT'
 import { fetchAirSeries, fetchArchiveDaily, fetchSolar, fetchStationSeries, series } from '../lib/api'
 import { dailySum, timeOption, zip } from '../lib/chartOptions'
 import { downloadCSV } from '../lib/export'
-import { compass, fmt, weatherText } from '../lib/metrics'
-import { stationById } from '../lib/places'
+import { compass, fmt, inkOn, RIVER_LEVELS, riverLevelText, uvBand, weatherText } from '../lib/metrics'
+import { districtName, placeName, riverNames, riversNear, stationById, type Station } from '../lib/places'
 import { addDays, addHours, colomboNow, colomboToday, compact, dayMonth, dayName } from '../lib/time'
-import { useNowcast } from '../hooks/useLiveData'
+import { useNowcast, useRivers } from '../hooks/useLiveData'
 import { useSettings } from '../stores/settings'
 
 type Range = '24h' | '7d' | '30d'
@@ -28,6 +35,10 @@ export default function StationPage() {
   const theme = useSettings((s) => s.theme)
   const { readings } = useNowcast()
   const now = readings?.find((r) => r.station.id === id)
+  const [embedOpen, setEmbedOpen] = useState(false)
+  const { t, lang } = useT()
+  const name = st ? placeName(st, lang) : ''
+  useTitle(st ? name : t('place.unknownTitle'))
 
   const wx = useQuery({
     queryKey: ['station', id, range],
@@ -45,33 +56,55 @@ export default function StationPage() {
   if (!st) {
     return (
       <div className="mx-auto max-w-3xl p-6">
-        <p className="mb-3">There is no place called “{id}” in LankaTwin.</p>
-        <Link to="/stations" className="font-semibold text-lagoon underline">Browse all places</Link>
+        <p className="mb-3">{t('place.unknown', { id: id ?? '' })}</p>
+        <Link to="/stations" className="font-semibold text-lagoon underline">{t('place.browse')}</Link>
       </div>
     )
   }
 
   const nowWall = colomboNow()
+  const others = [st.name, st.si, st.ta].filter((n) => n !== name).join(' · ')
+  const sky = now ? weatherText(now.weatherCode, t) : ''
   const win = { from: addHours(nowWall, -RANGE[range].back), to: addHours(nowWall, RANGE[range].fwd) }
 
   return (
     <div className="mx-auto max-w-6xl space-y-5 px-4 py-6">
       <Link to={`/?s=${st.id}&k=station`} className="inline-flex items-center gap-1 text-sm text-muted hover:text-ink">
-        <ArrowLeft className="size-4" aria-hidden /> Back to map
+        <ArrowLeft className="size-4" aria-hidden /> {t('place.back')}
       </Link>
 
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-extrabold tracking-tight">
-            {st.name} <span className="text-2xl font-medium text-muted">{st.si}</span>
-          </h1>
-          <p className="mt-1 text-muted">
-            {st.district} District, {st.province} Province · {st.lat.toFixed(3)}°N {st.lon.toFixed(3)}°E
-            {wx.data?.elevation != null && ` · ${Math.round(wx.data.elevation)} m`}
-          </p>
+      <PlacePhoto key={st.id} station={st} sky={now ? skyFor(now.weatherCode, now.isDay) : undefined} className="h-56 rounded-2xl sm:h-72">
+        <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-4 text-white sm:p-6">
+          <div className="min-w-0">
+            <h1 className="text-4xl font-extrabold tracking-tight drop-shadow sm:text-5xl">{name}</h1>
+            <p className="mt-0.5 text-lg font-medium text-white/90 drop-shadow">{others}</p>
+            <p className="mt-1 text-sm text-white/80">
+              {t('common.districtProvince', { district: districtName(st.district, lang), province: t(`prov.${st.province}` as Key) })} · {st.lat.toFixed(3)}°N {st.lon.toFixed(3)}°E
+              {wx.data?.elevation != null && ` · ${Math.round(wx.data.elevation)} m`}
+            </p>
+          </div>
+          {now && (
+            <div className="hidden shrink-0 items-center gap-2 rounded-xl bg-black/30 px-3 py-2 backdrop-blur-sm sm:flex">
+              <WeatherIcon code={now.weatherCode} isDay={now.isDay ?? true} className="size-12" />
+              <div>
+                <div className="text-3xl font-extrabold leading-none">{fmt(now.values.temp)}°</div>
+                <div className="text-xs text-white/85">{sky}</div>
+              </div>
+            </div>
+          )}
+        </div>
+      </PlacePhoto>
+
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <FavoriteButton id={st.id} name={name} className="border border-line bg-surface !p-2" />
+          <ShareButton title={t('place.shareTitle', { place: name })} text={now ? t('place.shareText', { place: name, temp: fmt(now.values.temp), sky: lang === 'en' ? sky.toLowerCase() : sky }) : undefined} path={`/station/${st.id}`} />
+          <button onClick={() => setEmbedOpen((o) => !o)} aria-expanded={embedOpen} className="flex items-center gap-1.5 rounded-lg border border-line bg-surface px-3 py-1.5 text-sm font-medium hover:bg-sunken">
+            <Code2 className="size-4" aria-hidden /> {t('place.embed')}
+          </button>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Segmented label="Time range" value={range} onChange={setRange} options={[{ value: '24h', label: '24 hours' }, { value: '7d', label: '7 days' }, { value: '30d', label: '30 days' }]} />
+          <Segmented label={t('place.range')} value={range} onChange={setRange} options={[{ value: '24h', label: t('place.24h') }, { value: '7d', label: t('place.7d') }, { value: '30d', label: t('place.30d') }]} />
           <button
             disabled={!wx.data}
             onClick={() => exportCSV(st.id, wx.data, aq.data)}
@@ -82,18 +115,27 @@ export default function StationPage() {
         </div>
       </header>
 
+      {embedOpen && <EmbedCode station={st} />}
+
       {now ? (
         <section className="grid grid-cols-2 gap-4 rounded-xl border border-line bg-surface p-4 sm:grid-cols-4 lg:grid-cols-7">
-          <div className="col-span-2 sm:col-span-4 lg:col-span-1">
-            <div className="text-5xl font-extrabold tracking-tight">{fmt(now.values.temp)}°</div>
-            <div className="text-sm text-muted">{weatherText(now.weatherCode)}</div>
+          <div className="col-span-2 flex items-center gap-2 sm:col-span-4 lg:col-span-1">
+            <WeatherIcon code={now.weatherCode} isDay={now.isDay ?? true} className="size-12 shrink-0" />
+            <div>
+              <div className="text-5xl font-extrabold tracking-tight">{fmt(now.values.temp)}°</div>
+              <div className="text-sm text-muted">{sky}</div>
+            </div>
           </div>
-          <Stat label="Feels like" value={fmt(now.values.feels)} unit="°" sub={`Max today ${fmt(now.feelsMaxToday)}°`} />
-          <Stat label="Humidity" value={fmt(now.values.humidity)} unit="%" sub={`Cloud ${fmt(now.cloud)}%`} />
-          <Stat label="Wind" value={fmt(now.windSpeed)} unit="km/h" sub={`${compass(now.windDir)}, gusts ${fmt(now.values.gust)}`} />
-          <Stat label="Rain, last 24 h" value={fmt(now.values.rain24, 1)} unit="mm" />
-          <Stat label="Rain, next 24 h" value={fmt(now.values.rainNext24, 1)} unit="mm" sub={now.rainProbNext24 != null ? `${now.rainProbNext24}% max chance` : undefined} />
-          <Stat label="Air (US AQI)" value={fmt(now.values.aqi)} sub={now.air ? `PM2.5 ${fmt(now.air.pm25)} · PM10 ${fmt(now.air.pm10)}` : undefined} />
+          <Stat label={t('stat.feels')} value={fmt(now.values.feels)} unit="°" sub={t('stat.maxToday', { t: fmt(now.feelsMaxToday) })} />
+          <Stat label={t('stat.humidity')} value={fmt(now.values.humidity)} unit="%" sub={t('stat.cloud', { c: fmt(now.cloud) })} />
+          <Stat label={t('stat.wind')} value={fmt(now.windSpeed)} unit="km/h" sub={t('stat.windSub', { dir: compass(now.windDir), g: fmt(now.values.gust) })} />
+          <Stat label={t('stat.rainPast')} value={fmt(now.values.rain24, 1)} unit="mm" />
+          <Stat label={t('stat.rainNext')} value={fmt(now.values.rainNext24, 1)} unit="mm" sub={now.rainProbNext24 != null ? t('stat.maxChance', { p: now.rainProbNext24 }) : undefined} />
+          <Stat label={t('stat.air')} value={fmt(now.values.aqi)} sub={now.air ? `PM2.5 ${fmt(now.air.pm25)} · PM10 ${fmt(now.air.pm10)}` : undefined} />
+          <Stat label={t('stat.uvNow')} value={fmt(now.air?.uv)} sub={t('stat.uvSub', { band: uvBand(now.air?.uv, t), uv: fmt(now.uvMax) })} />
+          <Stat label={t('stat.pressure')} value={fmt(now.pressure)} unit="hPa" />
+          <Stat label={t('stat.today')} value={`${fmt(now.tMax)}°`} sub={t('stat.low', { t: fmt(now.tMin) })} />
+          <Stat label={t('stat.gustsToday')} value={fmt(now.gustMaxToday)} unit="km/h" />
         </section>
       ) : (
         <Skeleton className="h-24" />
@@ -101,7 +143,14 @@ export default function StationPage() {
 
       {wx.error && <SourceProblem error={wx.error} onRetry={() => wx.refetch()} />}
 
+      <HourlyStrip data={wx.data} nowWall={nowWall} />
+
       <DailyStrip data={wx.data} />
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <SeasonCard className="p-4" />
+        <NearbyRivers station={st} />
+      </div>
 
       <Charts wx={wx.data} aq={aq.data} aqError={aq.error} range={range} win={win} nowWall={nowWall} theme={theme} file={st.id} />
 
@@ -111,7 +160,7 @@ export default function StationPage() {
       </div>
 
       <p className="text-xs text-muted">
-        <Freshness at={wx.dataUpdatedAt} fetching={wx.isFetching} /> · All times Sri Lanka time (UTC+5:30). Model values for the grid cell around {st.name}; they can differ from what a rain gauge in town records.
+        <Freshness at={wx.dataUpdatedAt} fetching={wx.isFetching} /> · {t('place.footnote', { place: name })}
       </p>
     </div>
   )
@@ -121,6 +170,7 @@ type Wx = Awaited<ReturnType<typeof fetchStationSeries>>
 type Aq = Awaited<ReturnType<typeof fetchAirSeries>>
 
 function Charts({ wx, aq, aqError, range, win, nowWall, theme, file }: { wx?: Wx; aq?: Aq; aqError: unknown; range: Range; win: { from: string; to: string }; nowWall: string; theme: string; file: string }) {
+  const { t: tr, lang } = useT()
   const opts = useMemo(() => {
     if (!wx?.hourly) return undefined
     const t = chartTokens()
@@ -130,55 +180,142 @@ function Charts({ wx, aq, aqError, range, win, nowWall, theme, file }: { wx?: Wx
     const pick = (k: string) => series(wx.hourly, k).filter((_, i) => keep[i])
     const rain = pick('precipitation')
     const rainSpec = range === '30d'
-      ? { name: 'Daily rain', type: 'bar' as const, data: dailySum(tw, rain).map(([d, v]) => [`${d}T12:00`, v] as [string, number]), color: t.lagoon }
-      : { name: 'Hourly rain', type: 'bar' as const, data: zip(tw, rain), color: t.lagoon }
+      ? { name: tr('series.dailyRain'), type: 'bar' as const, data: dailySum(tw, rain).map(([d, v]) => [`${d}T12:00`, v] as [string, number]), color: t.lagoon }
+      : { name: tr('series.hourlyRain'), type: 'bar' as const, data: zip(tw, rain), color: t.lagoon }
     const at = (aq?.hourly?.time ?? []) as string[]
     const akeep = at.map((x) => x >= win.from && x <= win.to)
     const atw = at.filter((_, i) => akeep[i])
     const apick = (k: string) => series(aq?.hourly, k).filter((_, i) => akeep[i])
     return {
       temp: timeOption([
-        { name: 'Air temperature', data: zip(tw, pick('temperature_2m')), color: t.thambili, area: true },
-        { name: 'Feels like', data: zip(tw, pick('apparent_temperature')), color: t.rambutan, dashed: true, width: 1.5 },
+        { name: tr('series.airTemp'), data: zip(tw, pick('temperature_2m')), color: t.thambili, area: true },
+        { name: tr('series.feels'), data: zip(tw, pick('apparent_temperature')), color: t.rambutan, dashed: true, width: 1.5 },
       ], { unit: '°C', now: nowWall }),
       rain: timeOption([rainSpec], { unit: 'mm', now: nowWall, yMin0: true }),
       rainTotal: { past: rain.filter((_, i) => tw[i] <= nowWall).reduce<number>((a, b) => a + (b ?? 0), 0), next: rain.filter((_, i) => tw[i] > nowWall).reduce<number>((a, b) => a + (b ?? 0), 0) },
       humid: timeOption([
-        { name: 'Humidity', data: zip(tw, pick('relative_humidity_2m')), color: t.lagoon },
-        { name: 'Cloud cover', data: zip(tw, pick('cloud_cover')), color: t.muted, dashed: true, width: 1.5 },
+        { name: tr('series.humidity'), data: zip(tw, pick('relative_humidity_2m')), color: t.lagoon },
+        { name: tr('series.cloud'), data: zip(tw, pick('cloud_cover')), color: t.muted, dashed: true, width: 1.5 },
       ], { unit: '%', now: nowWall, min: 0, max: 100, decimals: 0 }),
       wind: timeOption([
-        { name: 'Wind', data: zip(tw, pick('wind_speed_10m')), color: t.lagoon },
-        { name: 'Gusts', data: zip(tw, pick('wind_gusts_10m')), color: t.thambili, dashed: true, width: 1.5 },
+        { name: tr('series.wind'), data: zip(tw, pick('wind_speed_10m')), color: t.lagoon },
+        { name: tr('series.gusts'), data: zip(tw, pick('wind_gusts_10m')), color: t.thambili, dashed: true, width: 1.5 },
       ], { unit: 'km/h', now: nowWall, yMin0: true, decimals: 0 }),
-      soil: timeOption([{ name: 'Top-soil moisture', data: zip(tw, pick('soil_moisture_0_to_1cm')), color: t.paddy, area: true }], { unit: 'm³/m³', now: nowWall, decimals: 2 }),
+      soil: timeOption([{ name: tr('series.soil'), data: zip(tw, pick('soil_moisture_0_to_1cm')), color: t.paddy, area: true }], { unit: 'm³/m³', now: nowWall, decimals: 2 }),
       air: atw.length
         ? timeOption([
-            { name: 'US AQI', data: zip(atw, apick('us_aqi')), color: t.rambutan },
-            { name: 'PM2.5 µg/m³', data: zip(atw, apick('pm2_5')), color: t.muted, dashed: true, width: 1.5 },
+            { name: tr('series.aqi'), data: zip(atw, apick('us_aqi')), color: t.rambutan },
+            { name: tr('series.pm25'), data: zip(atw, apick('pm2_5')), color: t.muted, dashed: true, width: 1.5 },
           ], { unit: '', now: nowWall, yMin0: true, decimals: 0 })
         : undefined,
     }
-  }, [wx, aq, range, win.from, win.to, nowWall, theme]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [wx, aq, range, win.from, win.to, nowWall, theme, lang]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const loading = !wx
   return (
     <div className="grid gap-4 lg:grid-cols-2">
-      <ChartCard title="Temperature" sub="Air temperature and feels-like, °C" option={opts?.temp} loading={loading} file={`${file}-temperature`} />
+      <ChartCard title={tr('chart.temp')} sub={tr('chart.tempSub')} option={opts?.temp} loading={loading} file={`${file}-temperature`} />
       <ChartCard
-        title="Rainfall"
-        sub={opts ? `${fmt(opts.rainTotal.past, 1)} mm in this window so far · ${fmt(opts.rainTotal.next, 1)} mm forecast` : 'mm per hour'}
+        title={tr('chart.rain')}
+        sub={opts ? tr('chart.rainSub', { past: fmt(opts.rainTotal.past, 1), next: fmt(opts.rainTotal.next, 1) }) : tr('chart.rainUnit')}
         option={opts?.rain} loading={loading} file={`${file}-rain`}
       />
-      <ChartCard title="Humidity and cloud" sub="%" option={opts?.humid} loading={loading} file={`${file}-humidity`} />
-      <ChartCard title="Wind" sub="Mean wind and gusts at 10 m, km/h" option={opts?.wind} loading={loading} file={`${file}-wind`} />
-      <ChartCard title="Air quality" sub={aqError ? 'Air-quality source unavailable right now' : 'CAMS model, US AQI and PM2.5'} option={opts?.air} loading={!aq && !aqError} file={`${file}-air`} />
-      <ChartCard title="Top-soil moisture" sub="0–1 cm, volumetric. Rising values after rain flag saturated ground." option={opts?.soil} loading={loading} file={`${file}-soil`} />
+      <ChartCard title={tr('chart.humid')} sub="%" option={opts?.humid} loading={loading} file={`${file}-humidity`} />
+      <ChartCard title={tr('chart.wind')} sub={tr('chart.windSub')} option={opts?.wind} loading={loading} file={`${file}-wind`} />
+      <ChartCard title={tr('chart.air')} sub={tr(aqError ? 'chart.airDown' : 'chart.airSub')} option={opts?.air} loading={!aq && !aqError} file={`${file}-air`} />
+      <ChartCard title={tr('chart.soil')} sub={tr('chart.soilSub')} option={opts?.soil} loading={loading} file={`${file}-soil`} />
     </div>
   )
 }
 
+function HourlyStrip({ data, nowWall }: { data?: Wx; nowWall: string }) {
+  const { t } = useT()
+  if (!data?.hourly) return <Skeleton className="h-32" />
+  const time = data.hourly.time as string[]
+  const hour = nowWall.slice(0, 13)
+  const start = Math.max(0, time.findIndex((t) => t.slice(0, 13) >= hour))
+  const idx = Array.from({ length: 24 }, (_, k) => start + k).filter((i) => i < time.length)
+  const v = (k: string, i: number) => series(data.hourly, k)[i]
+  return (
+    <section aria-label={t('place.next24')} className="rounded-xl border border-line bg-surface">
+      <h2 className="px-4 pt-3 text-[15px] font-semibold">{t('place.next24')}</h2>
+      <ol className="flex gap-1 overflow-x-auto px-2 pt-1 pb-3 [scrollbar-width:thin]">
+        {idx.map((i, k) => {
+          const p = v('precipitation_probability', i)
+          const mm = v('precipitation', i)
+          return (
+            <li key={time[i]} className="flex w-[60px] shrink-0 flex-col items-center gap-0.5 rounded-lg px-1 py-1.5 text-center text-xs">
+              <span className="font-medium text-muted">{k === 0 ? t('common.now') : time[i].slice(11, 16)}</span>
+              <WeatherIcon code={v('weather_code', i)} isDay={v('is_day', i) !== 0} className="size-8" title={weatherText(v('weather_code', i), t)} />
+              <span className="text-[15px] font-bold">{fmt(v('temperature_2m', i))}°</span>
+              <span className={`text-[11px] ${(p ?? 0) >= 50 ? 'font-semibold text-lagoon' : 'text-muted'}`}>{fmt(p)}%</span>
+              <span className="text-[11px] text-muted">{mm != null && mm > 0 ? `${fmt(mm, 1)} mm` : '·'}</span>
+            </li>
+          )
+        })}
+      </ol>
+    </section>
+  )
+}
+
+function NearbyRivers({ station }: { station: Station }) {
+  const { rivers } = useRivers()
+  const { t, lang } = useT()
+  const near = riversNear(station, 45)
+  return (
+    <section className="rounded-xl border border-line bg-surface p-4">
+      <h2 className="flex items-center gap-1.5 text-[15px] font-semibold"><Waves className="size-4 text-lagoon" aria-hidden /> {t('place.nearbyRivers')}</h2>
+      {near.length === 0 ? (
+        <p className="mt-1 text-sm text-muted">{rich(t('place.noRivers'), { place: placeName(station, lang), link: <Link to="/rivers" className="text-lagoon underline">{t('place.riversLink')}</Link> })}</p>
+      ) : (
+        <ul className="mt-2 space-y-1.5">
+          {near.map(({ point, km }) => {
+            const r = rivers?.find((x) => x.point.id === point.id)
+            const lv = r ? RIVER_LEVELS[r.level] : undefined
+            const n = riverNames(point, lang)
+            return (
+              <li key={point.id}>
+                <Link to={`/rivers/${point.id}`} className="flex items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-sm hover:bg-sunken">
+                  <span className="min-w-0"><b className="font-semibold">{t('river.at', n)}</b> <span className="text-muted">· {t('common.km', { n: Math.round(km) })}</span></span>
+                  {lv ? (
+                    <span className="shrink-0 rounded-md px-1.5 py-0.5 text-xs font-semibold" style={{ background: lv.color, color: inkOn(lv.color) }}>{fmt(r!.today)} m³/s · {riverLevelText(r!.level, t)}</span>
+                  ) : <Skeleton className="h-5 w-24" />}
+                </Link>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </section>
+  )
+}
+
+function EmbedCode({ station }: { station: Station }) {
+  const { t, lang } = useT()
+  const name = placeName(station, lang)
+  const src = `${location.origin}${location.pathname}#/embed/${station.id}${lang === 'en' ? '' : `?lang=${lang}`}`
+  const code = `<iframe src="${src}" width="320" height="180" style="border:0" title="${t('place.embedFrame', { place: name })}" loading="lazy"></iframe>`
+  const [copied, setCopied] = useState(false)
+  return (
+    <section className="grid gap-4 rounded-xl border border-line bg-surface p-4 md:grid-cols-[1fr_auto]">
+      <div className="min-w-0">
+        <h2 className="text-[15px] font-semibold">{t('place.embedTitle', { place: name })}</h2>
+        <p className="mt-1 text-sm text-muted">{rich(t('place.embedDesc'), { dark: <code>?theme=dark</code>, light: <code>?theme=light</code>, lang: <code>?lang=si</code> })}</p>
+        <textarea readOnly value={code} rows={3} onFocus={(e) => e.target.select()} className="mt-2 w-full rounded-lg border border-line bg-sunken p-2 font-mono text-xs" />
+        <button
+          onClick={async () => { try { await navigator.clipboard.writeText(code); setCopied(true); setTimeout(() => setCopied(false), 2000) } catch { /* select and copy by hand */ } }}
+          className="mt-2 rounded-lg bg-lagoon px-3 py-1.5 text-sm font-semibold text-canvas hover:brightness-110"
+        >
+          {copied ? t('common.copied') : t('place.embedCopy')}
+        </button>
+      </div>
+      <iframe src={src} width={320} height={180} className="rounded-xl border-0" title={t('place.embedPreview', { place: name })} loading="lazy" />
+    </section>
+  )
+}
+
 function DailyStrip({ data }: { data?: Wx }) {
+  const { t, locale } = useT()
   if (!data?.daily) return <Skeleton className="h-28" />
   const time = data.daily.time as string[]
   const today = colomboToday()
@@ -187,17 +324,21 @@ function DailyStrip({ data }: { data?: Wx }) {
   const v = (k: string, i: number) => series(data.daily, k)[start + i]
   const sun = (k: string, i: number) => String((data.daily?.[k] as string[] | undefined)?.[start + i] ?? '').slice(11, 16)
   return (
-    <section aria-label="7-day forecast" className="overflow-x-auto rounded-xl border border-line bg-surface">
+    <section aria-label={t('place.daily')} className="overflow-x-auto rounded-xl border border-line bg-surface">
       <ol className="grid min-w-[640px] grid-cols-7 divide-x divide-line">
         {days.map((d, i) => (
           <li key={d} className="p-3 text-sm">
-            <div className="font-semibold">{i === 0 ? 'Today' : dayName(d)} <span className="font-normal text-muted">{dayMonth(d)}</span></div>
-            <div className="mt-1 h-10 text-xs leading-tight text-muted">{weatherText(v('weather_code', i))}</div>
+            <div className="font-semibold">{i === 0 ? t('common.today') : dayName(d, locale)} <span className="font-normal text-muted">{dayMonth(d, locale)}</span></div>
+            <div className="mt-1 flex h-12 items-center gap-1.5">
+              <WeatherIcon code={v('weather_code', i)} className="size-9 shrink-0" />
+              <span className="text-xs leading-tight text-muted">{weatherText(v('weather_code', i), t)}</span>
+            </div>
             <div className="text-lg font-bold">{fmt(v('temperature_2m_max', i))}° <span className="text-sm font-medium text-muted">{fmt(v('temperature_2m_min', i))}°</span></div>
             <div className="text-xs"><span className="font-semibold text-lagoon">{fmt(v('precipitation_sum', i), 1)} mm</span> <span className="text-muted">· {fmt(v('precipitation_probability_max', i))}%</span></div>
+            <div className="text-[11px] text-muted">{t('place.dailySub', { uv: fmt(v('uv_index_max', i)), g: fmt(v('wind_gusts_10m_max', i)) })}</div>
             <div className="mt-1 flex gap-2 text-[11px] text-muted">
-              <span className="inline-flex items-center gap-0.5"><Sunrise className="size-3" aria-label="Sunrise" />{sun('sunrise', i)}</span>
-              <span className="inline-flex items-center gap-0.5"><Sunset className="size-3" aria-label="Sunset" />{sun('sunset', i)}</span>
+              <span className="inline-flex items-center gap-0.5"><Sunrise className="size-3" aria-label={t('place.sunrise')} />{sun('sunrise', i)}</span>
+              <span className="inline-flex items-center gap-0.5"><Sunset className="size-3" aria-label={t('place.sunset')} />{sun('sunset', i)}</span>
             </div>
           </li>
         ))}
@@ -210,6 +351,7 @@ function DailyStrip({ data }: { data?: Wx }) {
 function ClimateContext({ stationId }: { stationId: string }) {
   const st = stationById(stationId)!
   const theme = useSettings((s) => s.theme)
+  const { t: tr, lang, locale } = useT()
   // ERA5 lags ~5 days, so the window ends 6 days ago.
   const end = addDays(colomboToday(), -6)
   const start = addDays(end, -29)
@@ -251,17 +393,17 @@ function ClimateContext({ stationId }: { stationId: string }) {
       series: [{
         type: 'bar', barMaxWidth: 22,
         data: years.map((y) => ({ value: y.total, itemStyle: { color: y.year === endYear ? t.lagoon : t.line, borderRadius: [3, 3, 0, 0] } })),
-        markLine: mean != null ? { silent: true, symbol: 'none', data: [{ yAxis: Math.round(mean) }], lineStyle: { color: t.ink, type: 'dashed', opacity: 0.6 }, label: { formatter: '10-yr mean', color: t.muted, fontSize: 10, position: 'insideEndTop' } } : undefined,
+        markLine: mean != null ? { silent: true, symbol: 'none', data: [{ yAxis: Math.round(mean) }], lineStyle: { color: t.ink, type: 'dashed', opacity: 0.6 }, label: { formatter: tr('chart.decadeMean'), color: t.muted, fontSize: 10, position: 'insideEndTop' } } : undefined,
       }],
     }
     return { thisYear, mean, option }
-  }, [q.data, start, end, theme]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [q.data, start, end, theme, lang]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const pct = result?.thisYear && result.mean ? Math.round((result.thisYear.total / result.mean) * 100) : null
   return (
     <ChartCard
-      title="Rain against the past decade"
-      sub={`${dayMonth(start)} – ${dayMonth(end)} each year, ERA5 reanalysis`}
+      title={tr('climate.title')}
+      sub={tr('climate.sub', { from: dayMonth(start, locale), to: dayMonth(end, locale) })}
       option={result?.option}
       loading={q.isLoading}
       file={`${stationId}-rain-anomaly`}
@@ -269,9 +411,12 @@ function ClimateContext({ stationId }: { stationId: string }) {
       {q.error ? <div className="mt-2"><SourceProblem error={q.error} onRetry={() => q.refetch()} /></div> : null}
       {pct != null && (
         <p className="mt-2 text-sm">
-          <b className="font-semibold">{fmt(result!.thisYear!.total)} mm</b> fell in these 30 days, {' '}
-          <b className={`font-semibold ${pct >= 130 ? 'text-lagoon' : pct <= 70 ? 'text-thambili' : ''}`}>{pct}%</b> of the {fmt(result!.mean)} mm decade average
-          {pct >= 130 ? ' — a wetter than usual spell.' : pct <= 70 ? ' — drier than usual.' : ' — close to normal.'}
+          {rich(tr('climate.result'), {
+            mm: <b className="font-semibold">{fmt(result!.thisYear!.total)}</b>,
+            pct: <b className={`font-semibold ${pct >= 130 ? 'text-lagoon' : pct <= 70 ? 'text-thambili' : ''}`}>{pct}</b>,
+            mean: fmt(result!.mean),
+          })}
+          {tr(pct >= 130 ? 'climate.wetter' : pct <= 70 ? 'climate.drier' : 'climate.normal')}
         </p>
       )}
     </ChartCard>
@@ -281,6 +426,7 @@ function ClimateContext({ stationId }: { stationId: string }) {
 function Solar({ stationId }: { stationId: string }) {
   const st = stationById(stationId)!
   const theme = useSettings((s) => s.theme)
+  const { t: tr, lang, locale } = useT()
   const end = addDays(colomboToday(), -1)
   const start = addDays(end, -44)
   const q = useQuery({
@@ -301,16 +447,16 @@ function Solar({ stationId }: { stationId: string }) {
       avg,
       last: keys.at(-1),
       option: timeOption([
-        { name: 'All-sky', type: 'bar', data: keys.map((k) => [toIso(k), all[k]]), color: t.thambili },
-        { name: 'Clear-sky potential', data: keys.filter((k) => clr[k] > -900).map((k) => [toIso(k), clr[k]]), color: t.muted, dashed: true, width: 1.5 },
+        { name: tr('series.allSky'), type: 'bar', data: keys.map((k) => [toIso(k), all[k]]), color: t.thambili },
+        { name: tr('series.clearSky'), data: keys.filter((k) => clr[k] > -900).map((k) => [toIso(k), clr[k]]), color: t.muted, dashed: true, width: 1.5 },
       ], { unit: 'kWh/m²', yMin0: true, decimals: 2 }),
     }
-  }, [q.data, theme]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [q.data, theme, lang]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <ChartCard
-      title="Solar energy received"
-      sub="NASA POWER daily surface irradiance. Gap to the dashed line is what cloud took away."
+      title={tr('solar.title')}
+      sub={tr('solar.sub')}
       option={res?.option}
       loading={q.isLoading}
       file={`${stationId}-solar`}
@@ -318,8 +464,8 @@ function Solar({ stationId }: { stationId: string }) {
       {q.error ? <div className="mt-2"><SourceProblem error={q.error} onRetry={() => q.refetch()} /></div> : null}
       {res?.avg != null && (
         <p className="mt-2 text-sm">
-          Averaging <b className="font-semibold">{fmt(res.avg, 1)} kWh/m² a day</b> — about {fmt(res.avg * 0.8, 1)} kWh per day from each kW of rooftop solar (80% performance ratio).
-          {res.last && <span className="text-muted"> Latest complete day: {dayMonth(`${res.last.slice(0, 4)}-${res.last.slice(4, 6)}-${res.last.slice(6, 8)}`)}.</span>}
+          {rich(tr('solar.result'), { kwh: <b className="font-semibold">{fmt(res.avg, 1)}</b>, kw: fmt(res.avg * 0.8, 1) })}
+          {res.last && <span className="text-muted"> {tr('solar.latest', { d: dayMonth(`${res.last.slice(0, 4)}-${res.last.slice(4, 6)}-${res.last.slice(6, 8)}`, locale) })}</span>}
         </p>
       )}
     </ChartCard>

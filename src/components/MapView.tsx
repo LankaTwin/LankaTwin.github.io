@@ -9,6 +9,9 @@ import { SL_BOUNDS } from '../lib/places'
 import { colorFor, fmt, inkOn, METRICS, RIVER_LEVELS } from '../lib/metrics'
 import { useSettings, type Overlay } from '../stores/settings'
 import type { RiverReading, StationReading } from '../hooks/useLiveData'
+import { useT } from '../i18n/useT'
+import { placeName, riverNames } from '../lib/places'
+import { metricText, riverLevelText } from '../lib/metrics'
 
 const STYLES = {
   light: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
@@ -42,18 +45,24 @@ interface Props {
   rivers?: RiverReading[]
   selected?: string
   onSelect: (id: string, kind: 'station' | 'river') => void
+  /** Fly here when it changes. */
+  focus?: { lon: number; lat: number; zoom?: number }
+  /** Show a "you are here" dot. */
+  userLocation?: { lon: number; lat: number }
   className?: string
 }
 
-export default function MapView({ readings, rivers, selected, onSelect, className }: Props) {
+export default function MapView({ readings, rivers, selected, onSelect, focus, userLocation, className }: Props) {
   const box = useRef<HTMLDivElement>(null)
   const map = useRef<MLMap | null>(null)
   const stationMarkers = useRef(new Map<string, Marker>())
   const riverMarkers = useRef(new Map<string, Marker>())
+  const userMarker = useRef<Marker | null>(null)
   const onSelectRef = useRef(onSelect)
   onSelectRef.current = onSelect
 
   const { theme, metric, overlay, overlayOpacity, overlayDate, showRivers, showStations } = useSettings()
+  const { t, lang } = useT()
 
   // Create the map once.
   useEffect(() => {
@@ -69,6 +78,13 @@ export default function MapView({ readings, rivers, selected, onSelect, classNam
       attributionControl: { compact: true },
       dragRotate: false,
       pitchWithRotate: false,
+      // Control tooltips in the interface language; Dashboard remounts the map when it changes.
+      locale: {
+        'NavigationControl.ZoomIn': t('map.zoomIn'),
+        'NavigationControl.ZoomOut': t('map.zoomOut'),
+        'AttributionControl.ToggleAttribution': t('map.attribution'),
+        'Map.Title': t('map.title'),
+      },
     })
     m.touchZoomRotate.disableRotation()
     m.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
@@ -82,6 +98,7 @@ export default function MapView({ readings, rivers, selected, onSelect, classNam
       map.current = null
       stationMarkers.current.clear()
       riverMarkers.current.clear()
+      userMarker.current = null
     }
   }, [])
 
@@ -125,6 +142,24 @@ export default function MapView({ readings, rivers, selected, onSelect, classNam
     if (m?.getLayer('lt-overlay')) m.setPaintProperty('lt-overlay', 'raster-opacity', overlayOpacity)
   }, [overlayOpacity])
 
+  useEffect(() => {
+    if (!focus || !map.current) return
+    map.current.flyTo({ center: [focus.lon, focus.lat], zoom: focus.zoom ?? 9, essential: true, duration: 1200 })
+  }, [focus])
+
+  useEffect(() => {
+    const m = map.current
+    if (!m) return
+    userMarker.current?.remove()
+    userMarker.current = null
+    if (!userLocation) return
+    const el = document.createElement('div')
+    el.className = 'lt-me'
+    el.setAttribute('aria-label', t('dash.youAreHere'))
+    el.title = t('dash.youAreHere')
+    userMarker.current = new maplibregl.Marker({ element: el }).setLngLat([userLocation.lon, userLocation.lat]).addTo(m)
+  }, [userLocation]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Station value chips.
   useEffect(() => {
     const m = map.current
@@ -151,12 +186,13 @@ export default function MapView({ readings, rivers, selected, onSelect, classNam
         el.style.color = inkOn(bg)
         el.dataset.active = String(selected === id)
         el.innerHTML = `${fmt(v, met.decimals)}${met.unit && met.unit !== '°' ? `<small>${met.unit}</small>` : met.unit}`
-        el.setAttribute('aria-label', `${r.station.name}: ${met.label} ${fmt(v, met.decimals)} ${met.unit}`)
-        el.title = r.station.name
+        const name = placeName(r.station, lang)
+        el.setAttribute('aria-label', `${name}: ${metricText(metric, t).label} ${fmt(v, met.decimals)} ${met.unit}`)
+        el.title = name
       }
     }
     for (const [id, mk] of stationMarkers.current) if (!seen.has(id)) { mk.remove(); stationMarkers.current.delete(id) }
-  }, [readings, metric, selected, showStations])
+  }, [readings, metric, selected, showStations, lang]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // River chips.
   useEffect(() => {
@@ -183,18 +219,19 @@ export default function MapView({ readings, rivers, selected, onSelect, classNam
         el.dataset.active = String(selected === id)
         // Compact square so rivers don't crowd the town readings; the value shows on hover/selection.
         el.innerHTML = selected === id ? `≈ ${fmt(rv.today)}<small>m³/s</small>` : '≈'
-        el.setAttribute('aria-label', `${rv.point.river} at ${rv.point.near}: ${fmt(rv.today)} cubic metres per second, ${RIVER_LEVELS[rv.level].label}`)
-        el.title = `${rv.point.river} at ${rv.point.near}`
+        const title = t('river.at', riverNames(rv.point, lang))
+        el.setAttribute('aria-label', `${title}: ${fmt(rv.today)} m³/s, ${riverLevelText(rv.level, t)}`)
+        el.title = title
       }
     }
     for (const [id, mk] of riverMarkers.current) if (!seen.has(id)) { mk.remove(); riverMarkers.current.delete(id) }
-  }, [rivers, selected, showRivers])
+  }, [rivers, selected, showRivers, lang]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // MapLibre's own stylesheet sets position:relative on the map element (unlayered CSS beats
   // Tailwind's layered utilities), so positioning lives on a wrapper.
   return (
     <div className={className}>
-      <div ref={box} className="h-full w-full" role="region" aria-label="Map of Sri Lanka with live readings" />
+      <div ref={box} className="h-full w-full" role="region" aria-label={t('dash.mapRegion')} />
     </div>
   )
 }

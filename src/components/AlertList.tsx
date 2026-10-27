@@ -1,15 +1,17 @@
 import { Link } from 'react-router-dom'
 import { CloudRain, Thermometer, Wind, Factory, Waves, ShieldCheck } from 'lucide-react'
 import type { Alert, AlertKind } from '../lib/alerts'
+import { useT } from '../i18n/useT'
 
 const ICON: Record<AlertKind, typeof CloudRain> = { rain: CloudRain, heat: Thermometer, wind: Wind, air: Factory, river: Waves }
 
 export default function AlertList({ alerts, limit, compact }: { alerts: Alert[]; limit?: number; compact?: boolean }) {
+  const { t } = useT()
   if (!alerts.length) {
     return (
       <div className="flex items-center gap-2.5 rounded-lg bg-paddy-soft px-3 py-2.5 text-sm">
         <ShieldCheck className="size-4 text-paddy" aria-hidden />
-        No rain, heat, wind, air or river signals above screening thresholds right now.
+        {t('alerts.none')}
       </div>
     )
   }
@@ -34,14 +36,14 @@ export default function AlertList({ alerts, limit, compact }: { alerts: Alert[];
                 </div>
                 {!compact && <div className="text-muted">{a.detail}</div>}
               </div>
-              <span className="sr-only">{warn ? 'Warning level' : 'Watch level'}</span>
+              <span className="sr-only">{t(warn ? 'alerts.srWarning' : 'alerts.srWatch')}</span>
             </Link>
           </li>
         )
       })}
       {limit && alerts.length > limit && (
         <li className="px-1 pt-1 text-sm">
-          <Link to="/alerts" className="font-medium text-lagoon hover:underline">See all {alerts.length} signals</Link>
+          <Link to="/alerts" className="font-medium text-lagoon hover:underline">{t('alerts.seeAll', { n: alerts.length })}</Link>
         </li>
       )}
     </ul>

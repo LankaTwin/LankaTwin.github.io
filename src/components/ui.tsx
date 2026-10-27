@@ -1,7 +1,9 @@
-import { formatDistanceToNowStrict } from 'date-fns'
 import { useEffect, useState, type ReactNode } from 'react'
-import { AlertTriangle, RefreshCw } from 'lucide-react'
+import { AlertTriangle, Check, RefreshCw, Share2, Star } from 'lucide-react'
 import { SourceError } from '../lib/api'
+import { useSettings } from '../stores/settings'
+import { useT } from '../i18n/useT'
+import { timeAgo } from '../lib/time'
 
 export function Segmented<T extends string>({ value, options, onChange, label, size = 'md' }: {
   value: T
@@ -31,32 +33,34 @@ export function Segmented<T extends string>({ value, options, onChange, label, s
 }
 
 /** "Updated 3 min ago", re-rendered every 30 s. */
-export function Freshness({ at, prefix = 'Updated', fetching }: { at: number; prefix?: string; fetching?: boolean }) {
+export function Freshness({ at, fetching }: { at: number; fetching?: boolean }) {
+  const { t, locale } = useT()
   const [, tick] = useState(0)
   useEffect(() => {
     const t = setInterval(() => tick((n) => n + 1), 30_000)
     return () => clearInterval(t)
   }, [])
-  if (!at) return <span className="text-muted">Loading…</span>
+  if (!at) return <span className="text-muted">{t('common.loading')}</span>
   return (
-    <span className="inline-flex items-center gap-1.5 text-muted" title={new Date(at).toLocaleString('en-LK')}>
+    <span className="inline-flex items-center gap-1.5 text-muted" title={new Date(at).toLocaleString(locale)}>
       {fetching && <RefreshCw className="size-3 animate-spin" aria-hidden />}
-      {prefix} {formatDistanceToNowStrict(at, { addSuffix: true })}
+      {t('common.updated', { ago: timeAgo(at, locale) })}
     </span>
   )
 }
 
 export function SourceProblem({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
-  const src = error instanceof SourceError ? error.source : 'A data source'
-  const msg = error instanceof Error ? error.message : 'Unknown error'
+  const { t } = useT()
+  const src = error instanceof SourceError ? error.source : t('problem.unknownSource')
+  const msg = error instanceof SourceError && error.code ? t(error.code === 'timeout' ? 'problem.timeout' : 'problem.network') : error instanceof Error ? error.message : '?'
   return (
     <div role="alert" className="flex items-start gap-2 rounded-lg bg-thambili-soft p-3 text-sm text-ink">
       <AlertTriangle className="mt-0.5 size-4 shrink-0 text-thambili" aria-hidden />
       <div className="flex-1">
-        <b className="font-semibold">{src} didn’t respond.</b> {msg}. Showing what is available; the rest refreshes automatically.
+        {t('problem.text', { src, msg })}
       </div>
       {onRetry && (
-        <button onClick={onRetry} className="shrink-0 rounded-md px-2 py-0.5 font-semibold text-lagoon hover:bg-lagoon-soft">Retry</button>
+        <button onClick={onRetry} className="shrink-0 rounded-md px-2 py-0.5 font-semibold text-lagoon hover:bg-lagoon-soft">{t('common.retry')}</button>
       )}
     </div>
   )
@@ -92,3 +96,48 @@ export function Stat({ label, value, unit, sub }: { label: string; value: ReactN
     </div>
   )
 }
+
+/** Star a place so it is listed first on the map panel and in Places. */
+export function FavoriteButton({ id, name, className = '' }: { id: string; name: string; className?: string }) {
+  const { favorites, toggleFavorite } = useSettings()
+  const { t } = useT()
+  const on = favorites.includes(id)
+  return (
+    <button
+      type="button"
+      onClick={() => toggleFavorite(id)}
+      aria-pressed={on}
+      aria-label={t(on ? 'fav.unstar' : 'fav.star', { name })}
+      title={t(on ? 'fav.on' : 'fav.off')}
+      className={`rounded-md p-1.5 hover:bg-sunken ${on ? 'text-thambili' : 'text-muted hover:text-ink'} ${className}`}
+    >
+      <Star className="size-4" fill={on ? 'currentColor' : 'none'} aria-hidden />
+    </button>
+  )
+}
+
+/** Native share sheet where available, otherwise copies the link. */
+export function ShareButton({ title, text, path, className = '' }: { title: string; text?: string; path: string; className?: string }) {
+  const { t } = useT()
+  const [copied, setCopied] = useState(false)
+  const url = `${location.origin}${location.pathname}#${path}`
+  const share = async () => {
+    try {
+      if (navigator.share) { await navigator.share({ title, text, url }); return }
+    } catch (e) {
+      if ((e as Error).name === 'AbortError') return
+    }
+    try {
+      await navigator.clipboard.writeText(url)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch { prompt(t('share.prompt'), url) }
+  }
+  return (
+    <button type="button" onClick={share} className={`flex items-center gap-1.5 rounded-lg border border-line bg-surface px-3 py-1.5 text-sm font-medium text-ink hover:bg-sunken ${className}`}>
+      {copied ? <Check className="size-4 text-paddy" aria-hidden /> : <Share2 className="size-4" aria-hidden />}
+      {copied ? t('share.copied') : t('share.share')}
+    </button>
+  )
+}
+

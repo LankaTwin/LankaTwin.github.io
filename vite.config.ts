@@ -30,6 +30,8 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        // The link-preview image is only fetched by social sites.
+        globIgnores: ['og-image.png'],
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         runtimeCaching: [
           {
@@ -42,6 +44,12 @@ export default defineConfig({
             urlPattern: /^https:\/\/(basemaps\.cartocdn\.com|[a-d]\.basemaps\.cartocdn\.com|tiles\.basemaps\.cartocdn\.com)\/.*/,
             handler: 'CacheFirst',
             options: { cacheName: 'lt-basemap', expiration: { maxEntries: 1500, maxAgeSeconds: 60 * 60 * 24 * 30 } },
+          },
+          {
+            // Place photos and their credits change rarely.
+            urlPattern: /^https:\/\/(en\.wikipedia\.org\/(api\/rest_v1|w\/api\.php)|upload\.wikimedia\.org\/)/,
+            handler: 'StaleWhileRevalidate',
+            options: { cacheName: 'lt-photos', expiration: { maxEntries: 120, maxAgeSeconds: 60 * 60 * 24 * 30 }, cacheableResponse: { statuses: [0, 200] } },
           },
           {
             urlPattern: /^https:\/\/gibs\.earthdata\.nasa\.gov\/.*/,
