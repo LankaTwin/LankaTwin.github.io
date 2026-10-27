@@ -2,17 +2,19 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import seoPages from './scripts/seo-pages.ts'
 
-// Relative base + HashRouter means the build works at any GitHub Pages path
-// (user.github.io/LankaTwin/ or a custom domain) without changing config.
+// Served from the root of lankatwin.github.io with real paths (/station/kandy); the build
+// writes an HTML file per page (scripts/seo-pages.ts) and a 404.html fallback for the rest.
 export default defineConfig({
-  base: './',
+  base: '/',
   plugins: [
     react(),
     tailwindcss(),
+    seoPages(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg'],
+      includeAssets: ['favicon.svg', 'favicon.ico', 'apple-touch-icon.png'],
       manifest: {
         name: 'LankaTwin — Sri Lanka environmental twin',
         short_name: 'LankaTwin',
@@ -20,18 +22,32 @@ export default defineConfig({
         theme_color: '#0E6E78',
         background_color: '#F2F5F4',
         display: 'standalone',
-        start_url: './',
-        scope: './',
+        id: '/',
+        start_url: '/',
+        scope: '/',
+        lang: 'en',
+        dir: 'ltr',
+        orientation: 'any',
+        categories: ['weather', 'utilities', 'news'],
         icons: [
-          { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
-          { src: 'icon-512.png', sizes: '512x512', type: 'image/png' },
-          { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          { src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: '/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          { src: '/logo.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
+        ],
+        shortcuts: [
+          { name: 'Live dashboard', url: '/live', icons: [{ src: '/icon-192.png', sizes: '192x192' }] },
+          { name: 'Floods', url: '/floods', icons: [{ src: '/icon-192.png', sizes: '192x192' }] },
+          { name: 'River gauges', url: '/gauges', icons: [{ src: '/icon-192.png', sizes: '192x192' }] },
+          { name: 'Signals', url: '/alerts', icons: [{ src: '/icon-192.png', sizes: '192x192' }] },
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
-        // The link-preview image is only fetched by social sites.
-        globIgnores: ['og-image.png'],
+        // The app shell only: the per-page HTML files are for crawlers and first visits, and
+        // share images (og/*.jpg) are only fetched by social sites.
+        globPatterns: ['index.html', '**/*.{js,css,svg,png,ico,woff2}'],
+        navigateFallback: '/index.html',
+        navigateFallbackDenylist: [/^\/(sitemap\.xml|robots\.txt)$/],
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         runtimeCaching: [
           {

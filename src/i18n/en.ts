@@ -756,6 +756,23 @@ const en = {
   'thresholds.gauges': 'River gauges',
   'thresholds.gaugesBasis': 'Irrigation Department reading against the gauge’s own levels, within the last 3 hours',
   'src.irrigation.refresh': 'Hourly',
+  'share.menuTitle': 'Share this page',
+  'share.copyLink': 'Copy link',
+  'share.copyText': 'Copy summary and link',
+  'share.copiedText': 'Summary copied',
+  'share.email': 'Email',
+  'share.sms': 'Text message',
+  'share.more': 'More options',
+  'share.gaugeTitle': '{name} river gauge',
+  'share.gaugeText': '{name} ({basin}): {level} {unit}, {status} at {time}',
+  'share.riverText': '{place}: {flow} m³/s today, {status}',
+  'share.airTitle': 'Sri Lanka air quality now',
+  'share.alertsTitle': 'Sri Lanka weather and flood signals now',
+  'share.alertsText': '{w} warnings and {v} watches active across Sri Lanka',
+  'share.liveTitle': 'LankaTwin live dashboard',
+  'share.floodsTitle': 'Sri Lanka flood risk now',
+  'share.floodsText': '{n} towns at high flood risk or above; {g} river gauges at flood level',
+  'share.spotText': '{lat}, {lon}: {m} m above sea level, flood risk {risk}',
 } as const
 
 export type Key = keyof typeof en

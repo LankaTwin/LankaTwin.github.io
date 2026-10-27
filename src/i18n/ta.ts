@@ -736,6 +736,23 @@ const ta: Record<Key, string> = {
   'thresholds.gauges': 'ஆற்று நீர்மட்டங்கள்',
   'thresholds.gaugesBasis': 'கடந்த 3 மணிநேரத்தில் நீர்ப்பாசனத் திணைக்கள அளவீடு, அந்த அளவியின் சொந்த மட்டங்களுடன்',
   'src.irrigation.refresh': 'மணிநேரம்',
+  'share.menuTitle': 'இந்தப் பக்கத்தைப் பகிர்',
+  'share.copyLink': 'இணைப்பை நகலெடு',
+  'share.copyText': 'சுருக்கத்தையும் இணைப்பையும் நகலெடு',
+  'share.copiedText': 'சுருக்கம் நகலெடுக்கப்பட்டது',
+  'share.email': 'மின்னஞ்சல்',
+  'share.sms': 'குறுஞ்செய்தி',
+  'share.more': 'மேலும் விருப்பங்கள்',
+  'share.gaugeTitle': '{name} நீர்மட்ட அளவி',
+  'share.gaugeText': '{name} ({basin}): {level} {unit}, {time} இல் {status}',
+  'share.riverText': '{place}: இன்று {flow} m³/s, {status}',
+  'share.airTitle': 'இலங்கையின் தற்போதைய காற்றுத் தரம்',
+  'share.alertsTitle': 'இலங்கையின் தற்போதைய வானிலை, வெள்ள அறிகுறிகள்',
+  'share.alertsText': 'இலங்கை முழுவதும் {w} எச்சரிக்கைகளும் {v} கவனிப்புகளும் செயலில் உள்ளன',
+  'share.liveTitle': 'LankaTwin நேரலைப் பலகை',
+  'share.floodsTitle': 'இலங்கையின் தற்போதைய வெள்ள அபாயம்',
+  'share.floodsText': '{n} நகரங்களில் வெள்ள அபாயம் அதிகம் அல்லது அதற்கு மேல்; {g} ஆற்று அளவிகள் வெள்ள மட்டத்தில்',
+  'share.spotText': '{lat}, {lon}: கடல் மட்டத்திலிருந்து {m} மீ, வெள்ள அபாயம் {risk}',
 }
 
 export default ta

@@ -27,9 +27,6 @@ export const SCENES: Record<Zone | 'flood', string> = {
   flood: 'lankatwin/scenes/flood',
 }
 
-/** Link-preview crawlers want a plain JPEG, not format negotiation. */
-export const OG_IMAGE = `${BASE}/f_jpg,q_auto/lankatwin/og-image`
-
 /**
  * A remote image (here, Wikimedia Commons originals) delivered through Cloudinary's
  * fetch type: resized, compressed and cached on its CDN. Needs "Fetched URL" allowed in

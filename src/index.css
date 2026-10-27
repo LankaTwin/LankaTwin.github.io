@@ -130,3 +130,6 @@ body {
 .lt-chip.gauge[data-level="major"]:not([data-active="true"]) { animation: lt-gauge 1.6s ease-out infinite; }
 @keyframes lt-gauge { 0% { box-shadow: 0 0 0 2px var(--c-surface), 0 0 0 2px rgba(215,38,61,.6); } 100% { box-shadow: 0 0 0 2px var(--c-surface), 0 0 0 12px rgba(215,38,61,0); } }
 @media (prefers-reduced-motion: reduce) { .lt-chip.gauge[data-level="major"]:not([data-active="true"]) { animation: none; } }
+
+/* Map markers stay small to keep the island readable, but take touches over at least 26 px. */
+.lt-chip::after { content: ''; position: absolute; inset: -6px; border-radius: inherit; }

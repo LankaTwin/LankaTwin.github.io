@@ -1,15 +1,19 @@
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
-import { Activity, AlertTriangle, Bell, Download, Droplets, Ellipsis, Languages, Map as MapIcon, Moon, Search, Sun, WifiOff, X } from 'lucide-react'
+import { Activity, AlertTriangle, ChevronDown, Bell, Download, Droplets, Ellipsis, Languages, Map as MapIcon, Moon, Search, Sun, WifiOff, X } from 'lucide-react'
 import { useSettings } from '../stores/settings'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import CommandPalette from './CommandPalette'
+import { Mark, Wordmark } from './Logo'
+import { applyHead, pageMeta } from '../lib/seo'
+import { useGauges } from '../hooks/useGauges'
 import { useActiveSignals, useAlertTracker, useInstallPrompt, useOnline, useSignalNotifications } from '../hooks/useApp'
 import { LANGS, type Key, type Lang } from '../i18n/core'
 import { useT } from '../i18n/useT'
 
 export const REPO_URL = 'https://github.com/LankaTwin/LankaTwin.github.io'
 
-const NAV: { to: string; label: Key; end?: boolean }[] = [
+// `extra` items fold into a More menu on small laptops (1024–1279 px), where all eleven don't fit.
+const NAV: { to: string; label: Key; end?: boolean; extra?: boolean }[] = [
   { to: '/', label: 'nav.map', end: true },
   { to: '/live', label: 'nav.live' },
   { to: '/stations', label: 'nav.places' },
@@ -17,10 +21,10 @@ const NAV: { to: string; label: Key; end?: boolean }[] = [
   { to: '/gauges', label: 'nav.gauges' },
   { to: '/rivers', label: 'nav.rivers' },
   { to: '/air', label: 'nav.air' },
-  { to: '/compare', label: 'nav.compare' },
-  { to: '/alerts', label: 'nav.signals' },
-  { to: '/sources', label: 'nav.sources' },
-  { to: '/about', label: 'nav.about' },
+  { to: '/compare', label: 'nav.compare', extra: true },
+  { to: '/alerts', label: 'nav.signals', extra: true },
+  { to: '/sources', label: 'nav.sources', extra: true },
+  { to: '/about', label: 'nav.about', extra: true },
 ]
 
 // Phones get a bottom tab bar with the four screens people reach for in bad weather.
@@ -69,8 +73,8 @@ function WarningBanner() {
       <span className="min-w-0 flex-1 truncate">
         <b>{warnings.length === 1 ? t('banner.one') : t('banner.many', { n: warnings.length })}</b> · {first.title}, {first.place}
       </span>
-      <Link to="/live" className="shrink-0 rounded bg-white/20 px-2 py-0.5 font-semibold hover:bg-white/30">{t('banner.view')}</Link>
-      <button onClick={() => { setDismissed(ids); try { sessionStorage.setItem(BANNER_KEY, ids) } catch { /* storage blocked */ } }} aria-label={t('common.dismiss')} className="shrink-0 rounded p-0.5 hover:bg-white/20"><X className="size-4" /></button>
+      <Link to="/live" className="inline-flex min-h-6 shrink-0 items-center rounded bg-white/20 px-2 py-0.5 font-semibold hover:bg-white/30">{t('banner.view')}</Link>
+      <button onClick={() => { setDismissed(ids); try { sessionStorage.setItem(BANNER_KEY, ids) } catch { /* storage blocked */ } }} aria-label={t('common.dismiss')} className="grid size-7 shrink-0 place-items-center rounded hover:bg-white/20"><X className="size-4" /></button>
     </div>
   )
 }
@@ -108,6 +112,40 @@ function BottomTabs() {
   )
 }
 
+/** The folded nav items on small laptops. */
+function DesktopMore() {
+  const { t } = useT()
+  const loc = useLocation()
+  const [open, setOpen] = useState(false)
+  const box = useRef<HTMLDivElement>(null)
+  const items = NAV.filter((n) => n.extra)
+  const active = items.some((n) => loc.pathname.startsWith(n.to))
+  useEffect(() => setOpen(false), [loc.pathname])
+  useEffect(() => {
+    if (!open) return
+    const off = (e: Event) => { if (!box.current?.contains(e.target as Node)) setOpen(false) }
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('pointerdown', off)
+    document.addEventListener('keydown', esc)
+    return () => { document.removeEventListener('pointerdown', off); document.removeEventListener('keydown', esc) }
+  }, [open])
+  return (
+    <div ref={box} className="relative hidden shrink-0 lg:block xl:hidden">
+      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-haspopup="true"
+        className={`flex items-center gap-1 rounded-md px-2.5 py-1.5 text-sm font-medium ${open || active ? 'bg-lagoon-soft text-lagoon' : 'text-muted hover:text-ink'}`}>
+        {t('mobile.more')} <ChevronDown className={`size-3.5 transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden />
+      </button>
+      {open && (
+        <div className="absolute left-0 z-50 mt-1.5 w-48 rounded-xl border border-line bg-surface p-1.5 shadow-xl">
+          {items.map((n) => (
+            <NavLink key={n.to} to={n.to} className={({ isActive }) => `block rounded-md px-3 py-2 text-sm font-medium ${isActive ? 'bg-lagoon-soft text-lagoon' : 'hover:bg-sunken'}`}>{t(n.label)}</NavLink>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function AlertTracker() {
   useAlertTracker()
   return null
@@ -131,14 +169,13 @@ function LanguagePicker() {
   )
 }
 
-export function Mark({ className = 'size-7' }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 64 64" className={className} aria-hidden>
-      <rect width="64" height="64" rx="14" fill="var(--c-lagoon)" />
-      <path d="M30 11c5 1 9 5 12 10 4 7 8 12 9 19 1 8-4 14-11 15-6 1-11-2-14-7-3-6-6-10-6-17 0-8 3-15 10-20z" fill="var(--c-canvas)" />
-      <circle cx="34" cy="38" r="5" fill="#E2A11B" />
-    </svg>
-  )
+/** Description, canonical link, share tags and structured data follow the current page. */
+function useSeoHead(pathname: string) {
+  const { gauges } = useGauges()
+  useEffect(() => {
+    const m = pageMeta(pathname, gauges?.map((g) => ({ id: g.id, name: g.name, basin: g.basin, lat: g.lat, lon: g.lon })))
+    if (m) applyHead(m, m.title)
+  }, [pathname, gauges])
 }
 
 function SignalWatcher() {
@@ -156,6 +193,7 @@ export default function Layout() {
   const [searching, setSearching] = useState(false)
   useEffect(() => { if (!isMap) window.scrollTo(0, 0) }, [loc.pathname, isMap])
   useEffect(() => { document.documentElement.lang = lang }, [lang])
+  useSeoHead(loc.pathname)
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -174,8 +212,8 @@ export default function Layout() {
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-surface focus:p-2">{t('layout.skip')}</a>
       <header className="z-20 flex shrink-0 items-center gap-1.5 border-b border-line bg-surface px-3 py-2 pt-[max(0.5rem,env(safe-area-inset-top))] sm:gap-3 sm:px-4">
         <NavLink to="/" className="flex items-center gap-2 pr-1" aria-label={t('layout.home')}>
-          <Mark />
-          <span className="hidden text-[17px] font-extrabold tracking-tight min-[400px]:inline">LankaTwin</span>
+          <Mark className="size-8" />
+          <Wordmark className="hidden text-[18px] min-[400px]:inline" />
         </NavLink>
         <div className="flex-1 lg:hidden" />
         <nav aria-label={t('layout.mainNav')} className="-mx-1 hidden min-w-0 flex-1 gap-0.5 overflow-x-auto [scrollbar-width:none] lg:flex">
@@ -185,13 +223,14 @@ export default function Layout() {
               to={n.to}
               end={n.end}
               className={({ isActive }) =>
-                `shrink-0 rounded-md px-2.5 py-1.5 text-sm font-medium ${isActive ? 'bg-lagoon-soft text-lagoon' : 'text-muted hover:text-ink'}`
+                `shrink-0 rounded-md px-2.5 py-1.5 text-sm font-medium ${n.extra ? 'hidden xl:block' : ''} ${isActive ? 'bg-lagoon-soft text-lagoon' : 'text-muted hover:text-ink'}`
               }
             >
               {t(n.label)}
             </NavLink>
           ))}
         </nav>
+        <DesktopMore />
         <button
           type="button"
           onClick={() => setSearching(true)}
@@ -231,7 +270,7 @@ export default function Layout() {
         <footer className="border-t border-line px-4 py-5 text-xs text-muted">
           <div className="mx-auto flex max-w-6xl flex-wrap justify-between gap-2">
             <span>{t('layout.footer')}</span>
-            <a className="underline" href={REPO_URL}>{t('layout.source')}</a>
+            <a className="inline-block py-1 underline" href={REPO_URL}>{t('layout.source')}</a>
           </div>
         </footer>
       )}

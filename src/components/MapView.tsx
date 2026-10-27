@@ -113,7 +113,8 @@ export default function MapView({ readings, rivers, gauges, force, selected, onS
     })
     m.touchZoomRotate.disableRotation()
     m.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
-    m.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-right')
+    // Under the zoom buttons: the bottom edge belongs to the legend and the variable picker.
+    m.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'top-right')
     // Chips stop their own clicks, so a map click is always a tap on open ground.
     m.on('click', (e) => onPickRef.current?.(e.lngLat.lat, e.lngLat.lng))
     map.current = m

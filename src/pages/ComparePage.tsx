@@ -76,7 +76,7 @@ export default function ComparePage() {
   })
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6">
+    <div className="mx-auto max-w-6xl px-4 py-6 2xl:max-w-[1600px] 2xl:px-8">
       <h1 className="text-3xl font-extrabold tracking-tight">{t('compare.title')}</h1>
       <p className="mb-5 mt-1 text-muted">{t('compare.intro', { n: MAX })}</p>
 

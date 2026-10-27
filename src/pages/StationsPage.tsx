@@ -32,7 +32,7 @@ export default function StationsPage() {
   }, [readings, sort, prov, favorites, lang])
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6">
+    <div className="mx-auto max-w-6xl px-4 py-6 2xl:max-w-[1600px] 2xl:px-8">
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight">{t('places.title')}</h1>
@@ -91,12 +91,12 @@ export default function StationsPage() {
               <tr className="border-b border-line text-left text-muted">
                 <th className="w-8 p-1"><span className="sr-only">{t('places.starred')}</span></th>
                 <th className="p-3 font-medium">
-                  <button onClick={() => setSort('name')} className={`hover:text-ink ${sort === 'name' ? 'text-ink' : ''}`}>{t('places.place')}</button>
+                  <button onClick={() => setSort('name')} className={`min-h-7 hover:text-ink ${sort === 'name' ? 'text-ink' : ''}`}>{t('places.place')}</button>
                 </th>
                 <th className="p-3 font-medium">{t('places.sky')}</th>
                 {METRIC_ORDER.map((m) => (
                   <th key={m} className="p-3 text-right font-medium" aria-sort={sort === m ? 'descending' : undefined}>
-                    <button onClick={() => setSort(m)} title={metricText(m, t).help} className={`inline-flex items-center gap-1 hover:text-ink ${sort === m ? 'text-ink' : ''}`}>
+                    <button onClick={() => setSort(m)} title={metricText(m, t).help} className={`inline-flex min-h-7 items-center gap-1 hover:text-ink ${sort === m ? 'text-ink' : ''}`}>
                       {sort === m && <ArrowDownWideNarrow className="size-3.5" aria-hidden />}{metricText(m, t).short}
                     </button>
                   </th>

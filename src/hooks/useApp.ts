@@ -69,7 +69,7 @@ export function useSignalNotifications() {
     for (const a of fresh.slice(0, 3)) {
       try {
         const n = new Notification(`${a.title} · ${a.place}`, { body: a.detail, icon: './icon-192.png', tag: a.id })
-        n.onclick = () => { window.focus(); location.hash = `#${a.href}` }
+        n.onclick = () => { window.focus(); location.assign(a.href) }
       } catch { /* some mobile browsers only allow notifications from a service worker */ }
     }
     if (fresh.length) {

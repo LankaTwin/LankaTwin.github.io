@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { ShareButton } from '../components/Share'
 import ChartCard from '../components/ChartCard'
 import { chartTokens } from '../components/Chart'
 import { Freshness, SourceProblem, Skeleton } from '../components/ui'
@@ -28,8 +29,17 @@ export default function RiversPage() {
   const selNames = sel ? riverNames(sel.point, lang) : undefined
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6">
-      <h1 className="text-3xl font-extrabold tracking-tight">{t('rivers.title')}</h1>
+    <div className="mx-auto max-w-6xl px-4 py-6 2xl:max-w-[1600px] 2xl:px-8">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <h1 className="text-3xl font-extrabold tracking-tight">{t('rivers.title')}</h1>
+        {sel && selNames && (
+          <ShareButton
+            title={t('river.at', selNames)}
+            text={t('share.riverText', { place: t('river.at', selNames), flow: fmt(sel.today), status: riverLevelText(sel.level, t) })}
+            path={`/rivers/${sel.point.id}`}
+          />
+        )}
+      </div>
       <p className="mb-5 mt-1 max-w-3xl text-muted">{t('rivers.intro', { n: rivers?.length ?? 14 })}</p>
       {query.error && <div className="mb-4"><SourceProblem error={query.error} onRetry={() => query.refetch()} /></div>}
 

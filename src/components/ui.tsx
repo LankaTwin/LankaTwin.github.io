@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { AlertTriangle, Check, RefreshCw, Share2, Star } from 'lucide-react'
+import { AlertTriangle, RefreshCw, Star } from 'lucide-react'
 import { SourceError } from '../lib/api'
 import { useSettings } from '../stores/settings'
 import { useT } from '../i18n/useT'
@@ -116,28 +116,4 @@ export function FavoriteButton({ id, name, className = '' }: { id: string; name:
   )
 }
 
-/** Native share sheet where available, otherwise copies the link. */
-export function ShareButton({ title, text, path, className = '' }: { title: string; text?: string; path: string; className?: string }) {
-  const { t } = useT()
-  const [copied, setCopied] = useState(false)
-  const url = `${location.origin}${location.pathname}#${path}`
-  const share = async () => {
-    try {
-      if (navigator.share) { await navigator.share({ title, text, url }); return }
-    } catch (e) {
-      if ((e as Error).name === 'AbortError') return
-    }
-    try {
-      await navigator.clipboard.writeText(url)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    } catch { prompt(t('share.prompt'), url) }
-  }
-  return (
-    <button type="button" onClick={share} className={`flex items-center gap-1.5 rounded-lg border border-line bg-surface px-3 py-1.5 text-sm font-medium text-ink hover:bg-sunken ${className}`}>
-      {copied ? <Check className="size-4 text-paddy" aria-hidden /> : <Share2 className="size-4" aria-hidden />}
-      {copied ? t('share.copied') : t('share.share')}
-    </button>
-  )
-}
 

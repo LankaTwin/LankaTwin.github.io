@@ -18,10 +18,21 @@ const queryClient = new QueryClient({
   },
 })
 
-createRoot(document.getElementById('root')!).render(
+const root = document.getElementById('root')!
+// The pre-rendered page inside #root is for crawlers and no-JS readers; the app takes over.
+root.replaceChildren()
+createRoot(root).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <App />
     </QueryClientProvider>
   </StrictMode>,
 )
+
+// Fade the splash out once the first frame of the app has painted.
+requestAnimationFrame(() => requestAnimationFrame(() => {
+  const s = document.getElementById('lt-splash')
+  if (!s) return
+  s.classList.add('lt-done')
+  setTimeout(() => s.remove(), 400)
+}))

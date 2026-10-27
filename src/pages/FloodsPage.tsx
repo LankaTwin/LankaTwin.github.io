@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { ShareButton } from '../components/Share'
 import { Link, useNavigate } from 'react-router-dom'
 import { ExternalLink, Layers, Map as MapIcon, ShieldAlert } from 'lucide-react'
 import EmergencyContacts from '../components/EmergencyContacts'
@@ -38,7 +39,7 @@ export default function FloodsPage() {
   const showWater = () => { s.setOverlayDate(yesterday()); s.setOverlay('flood'); nav('/') }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8 px-4 py-6">
+    <div className="mx-auto max-w-6xl space-y-8 px-4 py-6 2xl:max-w-[1600px] 2xl:px-8">
       <Scene id="flood" className="h-48 rounded-2xl sm:h-64">
         <h1 className="absolute bottom-4 left-4 text-4xl font-extrabold tracking-tight text-white drop-shadow sm:bottom-6 sm:left-6 sm:text-5xl">{t('floods.title')}</h1>
       </Scene>
@@ -53,6 +54,11 @@ export default function FloodsPage() {
         <div className="mt-4 flex flex-wrap gap-2">
           <button onClick={showRisk} className="flex items-center gap-2 rounded-lg bg-lagoon px-4 py-2 text-sm font-semibold text-canvas hover:brightness-110"><MapIcon className="size-4" aria-hidden /> {t('floods.showMap')}</button>
           <button onClick={showWater} className="flex items-center gap-2 rounded-lg border border-line bg-surface px-4 py-2 text-sm font-semibold hover:bg-sunken"><Layers className="size-4" aria-hidden /> {t('floods.showWater')}</button>
+          <ShareButton
+            title={t('share.floodsTitle')}
+            text={readings ? t('share.floodsText', { n: ranked.filter((r) => (r.flood?.score ?? 0) >= FLOOD_LEVELS.high.min).length, g: (gauges ?? []).filter((g) => !g.stale && (g.level === 'minor' || g.level === 'major')).length }) : undefined}
+            path="/floods"
+          />
         </div>
       </section>
 

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { ShareButton } from '../components/Share'
 import { Link } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { Maximize, Minimize, MonitorSmartphone, RefreshCw, Volume2, VolumeX } from 'lucide-react'
@@ -79,7 +80,7 @@ export default function LivePage() {
   const riversUp = rivers?.filter((r) => r.level !== 'normal').length
 
   return (
-    <div className="mx-auto max-w-7xl space-y-5 px-3 py-4 sm:px-4 sm:py-6">
+    <div className="mx-auto max-w-7xl space-y-5 2xl:max-w-[1720px] 2xl:px-8 px-3 py-4 sm:px-4 sm:py-6">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
@@ -94,10 +95,15 @@ export default function LivePage() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
+          <ShareButton
+            title={t('share.liveTitle')}
+            text={readings ? t('share.alertsText', { w: warnings, v: active.length - warnings }) : undefined}
+            path="/live"
+          />
           <Ctl onClick={refreshNow} icon={<RefreshCw className={`size-4 ${fetching ? 'animate-spin' : ''}`} />} label={t('live.refreshNow')} />
           <label className="flex items-center gap-1.5 rounded-lg border border-line bg-surface px-2 py-1.5 text-sm">
             <span className="text-muted">{t('live.every')}</span>
-            <select value={refreshMinutes} onChange={(e) => setRefresh(+e.target.value)} className="bg-transparent font-medium">
+            <select value={refreshMinutes} onChange={(e) => setRefresh(+e.target.value)} className="min-h-7 bg-transparent font-medium">
               {[5, 10, 15, 30].map((n) => <option key={n} value={n}>{t('about.minutes', { n })}</option>)}
             </select>
           </label>
@@ -138,7 +144,7 @@ export default function LivePage() {
         <section>
           <h2 className="mb-2 text-lg font-bold">{t('live.towns')}</h2>
           {!readings ? <Skeleton className="h-64" /> : (
-            <ul className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 xl:grid-cols-4">
+            <ul className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
               {[...readings].sort((a, b) => rank(worst.get(b.station.id)) - rank(worst.get(a.station.id)) || (b.flood?.score ?? 0) - (a.flood?.score ?? 0)).map((r) => {
                 const lv = worst.get(r.station.id)
                 const aqiC = colorFor(METRICS.aqi, r.values.aqi)
@@ -165,7 +171,7 @@ export default function LivePage() {
             </ul>
           )}
 
-          <h2 className="mb-2 mt-5 text-lg font-bold">{t('live.gaugesBoard')} <Link to="/gauges" className="text-sm font-normal text-lagoon hover:underline">{t('gauges.open')}</Link></h2>
+          <h2 className="mb-2 mt-5 text-lg font-bold">{t('live.gaugesBoard')} <Link to="/gauges" className="inline-block py-1 text-sm font-normal text-lagoon hover:underline">{t('gauges.open')}</Link></h2>
           {gaugeQ.error ? <SourceProblem error={gaugeQ.error} onRetry={() => gaugeQ.refetch()} /> : !gauges ? <Skeleton className="h-32" /> : (
             <ul className="grid gap-1.5 sm:grid-cols-2 xl:grid-cols-3">
               {gauges.filter((g) => g.latest && !g.rainOnly).slice(0, 12).map((g) => {

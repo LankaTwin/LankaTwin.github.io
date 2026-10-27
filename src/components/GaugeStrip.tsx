@@ -15,7 +15,7 @@ export default function GaugeStrip({ gauges, limit = 4 }: { gauges?: GaugeStatio
     <section className="rounded-xl border border-line bg-surface p-3">
       <div className="mb-2 flex items-baseline justify-between gap-2">
         <h2 className="text-[15px] font-semibold">{t('gauges.stripTitle')}</h2>
-        <Link to="/gauges" className="text-xs font-medium text-lagoon hover:underline">{t('gauges.open')}</Link>
+        <Link to="/gauges" className="inline-block py-1 text-xs font-medium text-lagoon hover:underline">{t('gauges.open')}</Link>
       </div>
       <div className="grid grid-cols-3 gap-1.5 text-center">
         {(['alert', 'minor', 'major'] as const).map((l) => (

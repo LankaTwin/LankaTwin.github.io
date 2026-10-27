@@ -736,6 +736,23 @@ const si: Record<Key, string> = {
   'thresholds.gauges': 'ගංගා ජල මට්ටම්',
   'thresholds.gaugesBasis': 'පසුගිය පැය 3 තුළ වාරිමාර්ග දෙපාර්තමේන්තු කියවීම, එම මිනුමේම මට්ටම් සමඟ',
   'src.irrigation.refresh': 'පැයෙන් පැයට',
+  'share.menuTitle': 'මෙම පිටුව බෙදාගන්න',
+  'share.copyLink': 'සබැඳිය පිටපත් කරන්න',
+  'share.copyText': 'සාරාංශය සහ සබැඳිය පිටපත් කරන්න',
+  'share.copiedText': 'සාරාංශය පිටපත් විය',
+  'share.email': 'විද්‍යුත් තැපෑල',
+  'share.sms': 'කෙටි පණිවිඩය',
+  'share.more': 'තවත් විකල්ප',
+  'share.gaugeTitle': '{name} ජල මට්ටම් මිනුම',
+  'share.gaugeText': '{name} ({basin}): {level} {unit}, {time} ට {status}',
+  'share.riverText': '{place}: අද {flow} m³/s, {status}',
+  'share.airTitle': 'ශ්‍රී ලංකාවේ වර්තමාන වායු ගුණත්වය',
+  'share.alertsTitle': 'ශ්‍රී ලංකාවේ වර්තමාන කාලගුණ සහ ගංවතුර සංඥා',
+  'share.alertsText': 'ශ්‍රී ලංකාව පුරා අනතුරු ඇඟවීම් {w}ක් සහ සැලකිලිමත් වීම් {v}ක් ක්‍රියාත්මකයි',
+  'share.liveTitle': 'LankaTwin සජීවී උපකරණ පුවරුව',
+  'share.floodsTitle': 'ශ්‍රී ලංකාවේ වර්තමාන ගංවතුර අවදානම',
+  'share.floodsText': 'නගර {n}ක ගංවතුර අවදානම ඉහළ හෝ ඊට වැඩි; ගංගා මිනුම් {g}ක් ගංවතුර මට්ටමේ',
+  'share.spotText': '{lat}, {lon}: මුහුදු මට්ටමේ සිට මීටර් {m}, ගංවතුර අවදානම {risk}',
 }
 
 export default si

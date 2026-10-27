@@ -1,5 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { ShareButton } from '../components/Share'
 import { Download, ExternalLink, Gauge as GaugeIcon, Search } from 'lucide-react'
 import type { EChartsCoreOption } from 'echarts/core'
 import MapView from '../components/MapView'
@@ -41,7 +42,7 @@ export default function GaugesPage() {
   )
 
   return (
-    <div className="mx-auto max-w-7xl space-y-5 px-3 py-4 sm:px-4 sm:py-6">
+    <div className="mx-auto max-w-7xl space-y-5 2xl:max-w-[1720px] 2xl:px-8 px-3 py-4 sm:px-4 sm:py-6">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0 max-w-3xl">
           <div className="flex items-center gap-2">
@@ -54,6 +55,13 @@ export default function GaugesPage() {
           <p className="mt-1 text-xs text-muted"><Freshness at={updatedAt} fetching={query.isFetching} /></p>
         </div>
         <div className="flex flex-wrap gap-1.5">
+          {sel && (
+            <ShareButton
+              title={t('share.gaugeTitle', { name: sel.name })}
+              text={sel.latest && !sel.rainOnly ? t('share.gaugeText', { name: sel.name, basin: sel.basin, level: fmt(sel.latest.level, 2), unit: sel.unit, status: t(sel.stale ? 'gauge.stale' : (`gaugeLevel.${sel.level}` as Key)), time: readingTime(sel.latest.time, locale) }) : undefined}
+              path={`/gauges/${sel.id}`}
+            />
+          )}
           <a href={OFFICIAL_DASHBOARD} className="flex items-center gap-1.5 rounded-lg border border-line bg-surface px-3 py-1.5 text-sm font-medium hover:bg-sunken">
             <ExternalLink className="size-4" aria-hidden /> {t('gauges.official')}
           </a>
