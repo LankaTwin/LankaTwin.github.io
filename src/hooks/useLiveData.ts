@@ -3,10 +3,14 @@ import { fetchAirNow, fetchNowcast, fetchRivers, series, type OMResponse } from 
 import { RIVER_POINTS, STATIONS, type RiverPoint, type Station } from '../lib/places'
 import { riverLevel, type MetricId, type RiverLevel } from '../lib/metrics'
 import { useSettings } from '../stores/settings'
+import { townFloodRisk, type FloodRisk } from '../lib/flood'
 
 export interface StationReading {
   station: Station
   time: string
+  /** Ground elevation at the town, metres (Copernicus DEM via Open-Meteo). */
+  elevation: number | null
+  flood?: FloodRisk
   values: Record<MetricId, number | null>
   weatherCode: number | null
   isDay: boolean | null
@@ -39,19 +43,26 @@ export interface RiverReading {
   todayIndex: number
 }
 
-const num = (x: unknown) => (typeof x === 'number' && !Number.isNaN(x) ? x : null)
+export const num = (x: unknown) => (typeof x === 'number' && !Number.isNaN(x) ? x : null)
 const sum = (xs: (number | null)[]) => xs.reduce<number>((a, b) => a + (b ?? 0), 0)
 
-function toReading(st: Station, r: OMResponse): StationReading {
-  const c = r.current ?? {}
-  const now = String(c.time ?? '')
+/** Rain summed over the 24 hours up to the current step and the 24 hours after it. */
+export function rainWindows(r: OMResponse) {
+  const now = String(r.current?.time ?? '')
   const ht = (r.hourly?.time ?? []) as string[]
   let i = -1
   for (let k = 0; k < ht.length; k++) if (ht[k] <= now) i = k
   const pr = series(r.hourly, 'precipitation')
-  const pp = series(r.hourly, 'precipitation_probability')
   const past = i >= 0 ? pr.slice(Math.max(0, i - 23), i + 1) : []
   const next = i >= 0 ? pr.slice(i + 1, i + 25) : []
+  return { i, past: past.length ? sum(past) : null, next: next.length ? sum(next) : null }
+}
+
+function toReading(st: Station, r: OMResponse): StationReading {
+  const c = r.current ?? {}
+  const now = String(c.time ?? '')
+  const { i, past, next } = rainWindows(r)
+  const pp = series(r.hourly, 'precipitation_probability')
   const nextProb = i >= 0 ? pp.slice(i + 1, i + 25).filter((x): x is number => x != null) : []
   const dt = (r.daily?.time ?? []) as string[]
   const today = now.slice(0, 10)
@@ -60,15 +71,17 @@ function toReading(st: Station, r: OMResponse): StationReading {
   return {
     station: st,
     time: now,
+    elevation: num(r.elevation),
     values: {
       temp: num(c.temperature_2m),
       feels: num(c.apparent_temperature),
-      rain24: past.length ? sum(past) : null,
-      rainNext24: next.length ? sum(next) : null,
+      rain24: past,
+      rainNext24: next,
       humidity: num(c.relative_humidity_2m),
       gust: num(c.wind_gusts_10m),
       aqi: null,
       pm25: null,
+      flood: null,
     },
     weatherCode: num(c.weather_code),
     isDay: c.is_day == null ? null : Number(c.is_day) === 1,
@@ -99,6 +112,8 @@ export function useNowcast() {
     queryFn: ({ signal }) => fetchAirNow(STATIONS, signal),
     refetchInterval: interval,
   })
+  // Rivers feed the flood score; the query is shared with every other useRivers() caller.
+  const { rivers } = useRivers()
 
   let readings: StationReading[] | undefined
   if (weather.data) {
@@ -110,10 +125,37 @@ export function useNowcast() {
         rd.values.pm25 = num(a.pm2_5)
         rd.air = { aqi: num(a.us_aqi), pm25: num(a.pm2_5), pm10: num(a.pm10), ozone: num(a.ozone), no2: num(a.nitrogen_dioxide), dust: num(a.dust), uv: num(a.uv_index), time: String(a.time ?? '') }
       }
+      rd.flood = townFloodRisk(rd, rivers)
+      rd.values.flood = rd.flood.score
       return rd
     })
   }
   return { readings, weather, air, updatedAt: Math.max(weather.dataUpdatedAt, air.dataUpdatedAt) }
+}
+
+/** Today's discharge, the 30-day median and the 10-day forecast peak from one GloFAS daily series. */
+export function riverStats(r: OMResponse, today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Colombo' })): Omit<RiverReading, 'point'> {
+  const time = (r.daily?.time ?? []) as string[]
+  const dis = series(r.daily, 'river_discharge')
+  const emax = series(r.daily, 'river_discharge_max')
+  let ti = time.indexOf(today)
+  if (ti < 0) ti = time.findIndex((t) => t > today) - 1
+  if (ti < 0) ti = 0
+  const past = dis.slice(Math.max(0, ti - 30), ti).filter((x): x is number => x != null)
+  const med = median(past)
+  let peak: number | null = null
+  let peakDate: string | null = null
+  for (let j = ti; j < Math.min(dis.length, ti + 10); j++) {
+    const v = dis[j]
+    if (v != null && (peak == null || v > peak)) { peak = v; peakDate = time[j] }
+  }
+  const fe = emax.slice(ti, ti + 10).filter((x): x is number => x != null)
+  const ratio = peak != null && med != null && med > 0.5 ? peak / med : null
+  return {
+    today: num(dis[ti]), median: med, peak, peakDate,
+    ensembleMaxPeak: fe.length ? Math.max(...fe) : null,
+    ratio, level: riverLevel(ratio), time, discharge: dis, ensembleMax: emax, todayIndex: ti,
+  }
 }
 
 function median(xs: number[]) {
@@ -132,38 +174,6 @@ export function useRivers() {
     refetchInterval: Math.max(60, refreshMin) * 60_000,
     staleTime: 30 * 60_000,
   })
-  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Colombo' })
-  const rivers: RiverReading[] | undefined = q.data?.map((r, k) => {
-    const time = (r.daily?.time ?? []) as string[]
-    const dis = series(r.daily, 'river_discharge')
-    const emax = series(r.daily, 'river_discharge_max')
-    let ti = time.indexOf(today)
-    if (ti < 0) ti = time.findIndex((t) => t > today) - 1
-    if (ti < 0) ti = 0
-    const past = dis.slice(Math.max(0, ti - 30), ti).filter((x): x is number => x != null)
-    const med = median(past)
-    let peak: number | null = null
-    let peakDate: string | null = null
-    for (let j = ti; j < Math.min(dis.length, ti + 10); j++) {
-      const v = dis[j]
-      if (v != null && (peak == null || v > peak)) { peak = v; peakDate = time[j] }
-    }
-    const fe = emax.slice(ti, ti + 10).filter((x): x is number => x != null)
-    const ratio = peak != null && med != null && med > 0.5 ? peak / med : null
-    return {
-      point: RIVER_POINTS[k],
-      today: num(dis[ti]),
-      median: med,
-      peak,
-      peakDate,
-      ensembleMaxPeak: fe.length ? Math.max(...fe) : null,
-      ratio,
-      level: riverLevel(ratio),
-      time,
-      discharge: dis,
-      ensembleMax: emax,
-      todayIndex: ti,
-    }
-  })
+  const rivers: RiverReading[] | undefined = q.data?.map((r, k) => ({ point: RIVER_POINTS[k], ...riverStats(r) }))
   return { rivers, query: q }
 }

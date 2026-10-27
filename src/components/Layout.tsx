@@ -12,7 +12,9 @@ export const REPO_URL = 'https://github.com/LankaTwin/LankaTwin.github.io'
 const NAV: { to: string; label: Key; end?: boolean }[] = [
   { to: '/', label: 'nav.map', end: true },
   { to: '/stations', label: 'nav.places' },
+  { to: '/floods', label: 'nav.floods' },
   { to: '/rivers', label: 'nav.rivers' },
+  { to: '/air', label: 'nav.air' },
   { to: '/compare', label: 'nav.compare' },
   { to: '/alerts', label: 'nav.signals' },
   { to: '/sources', label: 'nav.sources' },

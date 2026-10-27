@@ -105,6 +105,13 @@ body {
 }
 @keyframes lt-pulse { 0% { box-shadow: 0 0 0 3px #fff, 0 0 0 0 rgba(47,127,224,.45); } 100% { box-shadow: 0 0 0 3px #fff, 0 0 0 18px rgba(47,127,224,0); } }
 
+.lt-pin {
+  width: 22px; height: 30px; background: var(--c-rambutan);
+  clip-path: path('M11 30C11 30 0 17.5 0 11a11 11 0 0 1 22 0c0 6.5-11 19-11 19z');
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,.35));
+}
+.lt-pin::after { content: ''; position: absolute; left: 7px; top: 7px; width: 8px; height: 8px; border-radius: 50%; background: #fff; }
+
 .maplibregl-ctrl-attrib { font-size: 10px; }
 @media (max-width: 639px) { .maplibregl-ctrl-scale { display: none; } }
 .dark .maplibregl-ctrl-attrib { background: rgba(13,27,33,.8); color: var(--c-muted); }

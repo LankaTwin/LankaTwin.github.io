@@ -34,6 +34,11 @@ export const SOURCES: DataSource[] = [
     note: 'Modelled discharge for small Sri Lankan basins can differ a lot from Irrigation Department gauge readings. Treat it as a trend signal.',
   },
   {
+    id: 'elevation', name: 'Elevation API', provider: 'Open-Meteo / Copernicus DEM', status: 'live',
+    provides: 'Ground elevation for towns and any tapped spot, from the Copernicus GLO-90 digital elevation model', refresh: 'Static',
+    resolution: '90 m', license: 'CC BY 4.0; Copernicus DEM © DLR e.V. 2010–2014 and © Airbus Defence and Space GmbH 2014–2018, provided under COPERNICUS by the European Union and ESA', url: 'https://open-meteo.com/en/docs/elevation-api',
+  },
+  {
     id: 'archive', name: 'Historical Weather API', provider: 'Open-Meteo / ECMWF ERA5', status: 'live',
     provides: '10-year rainfall baseline for the climate-context anomaly', refresh: 'Daily, ~5-day lag', resolution: '~9–25 km',
     license: 'CC BY 4.0', url: 'https://open-meteo.com/en/docs/historical-weather-api',
@@ -45,8 +50,13 @@ export const SOURCES: DataSource[] = [
   },
   {
     id: 'gibs', name: 'GIBS WMS imagery', provider: 'NASA EOSDIS', status: 'imagery',
-    provides: 'MODIS true colour, 8-day NDVI, IMERG precipitation rate, land surface temperature', refresh: '30 min to 8 days by layer',
+    provides: 'MODIS true colour, near-real-time flood water (3-day), 8-day NDVI, IMERG precipitation rate, land surface temperature', refresh: '30 min to 8 days by layer',
     resolution: '250 m – 10 km', license: 'Public domain (NASA); cite NASA EOSDIS GIBS', url: 'https://nasa-gibs.github.io/gibs-api-docs/',
+  },
+  {
+    id: 'cloudinary', name: 'Image hosting', provider: 'Cloudinary', status: 'imagery',
+    provides: 'Hosting and on-the-fly resizing and compression of the app’s images (AVIF/WebP where supported)', refresh: 'Global CDN',
+    resolution: 'Sized per screen', license: 'Landscape scenes are AI-generated for LankaTwin', url: 'https://cloudinary.com',
   },
   {
     id: 'basemap', name: 'Basemap', provider: 'CARTO / OpenStreetMap contributors', status: 'imagery',

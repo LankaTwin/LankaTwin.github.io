@@ -44,9 +44,9 @@ describe('translations', () => {
 
   it('builds signals in the interface language', () => {
     const r = {
-      station: stationById('galle')!, time: '', weatherCode: 63, isDay: true, windSpeed: 0, windDir: 0, cloud: 0, pressure: 0,
+      station: stationById('galle')!, time: '', elevation: 5, weatherCode: 63, isDay: true, windSpeed: 0, windDir: 0, cloud: 0, pressure: 0,
       tMax: 0, tMin: 0, feelsMaxToday: 0, feelsMaxTomorrow: 0, rainProbNext24: 0, uvMax: 0, gustMaxToday: 0,
-      values: { temp: 28, feels: 30, rain24: 0, rainNext24: 120, humidity: 90, gust: 10, aqi: 20, pm25: 5 },
+      values: { temp: 28, feels: 30, rain24: 0, rainNext24: 120, flood: 0, humidity: 90, gust: 10, aqi: 20, pm25: 5 },
     } as StationReading
     const [si] = buildAlerts([r], [], 'si')
     expect(si.place).toBe('ගාල්ල')

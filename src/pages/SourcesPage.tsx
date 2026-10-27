@@ -33,8 +33,8 @@ export default function SourcesPage() {
             <p className="mt-2 text-sm">{tx(s.id, 'provides', s.provides)}</p>
             <dl className="mt-2 grid gap-x-6 gap-y-1 text-xs sm:grid-cols-3">
               <div><dt className="inline text-muted">{t('sources.refresh')} </dt><dd className="inline">{tx(s.id, 'refresh', s.refresh)}</dd></div>
-              <div><dt className="inline text-muted">{t('sources.resolution')} </dt><dd className="inline">{s.resolution}</dd></div>
-              <div><dt className="inline text-muted">{t('sources.licence')} </dt><dd className="inline">{s.license}</dd></div>
+              <div><dt className="inline text-muted">{t('sources.resolution')} </dt><dd className="inline">{tx(s.id, 'resolution', s.resolution)}</dd></div>
+              <div><dt className="inline text-muted">{t('sources.licence')} </dt><dd className="inline">{tx(s.id, 'license', s.license)}</dd></div>
             </dl>
             {s.note && <p className="mt-2 rounded-lg bg-sunken px-3 py-2 text-xs text-muted">{tx(s.id, 'note', s.note)}</p>}
           </article>

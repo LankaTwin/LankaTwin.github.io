@@ -1,16 +1,15 @@
 import { useMemo, useState } from 'react'
-import { Bell, BellOff, Phone } from 'lucide-react'
+import { Bell, BellOff } from 'lucide-react'
+import EmergencyContacts from '../components/EmergencyContacts'
 import AlertList from '../components/AlertList'
 import { Freshness, Skeleton } from '../components/ui'
 import { useNowcast, useRivers } from '../hooks/useLiveData'
 import { buildAlerts, RULES } from '../lib/alerts'
 import { notificationsSupported, useTitle } from '../hooks/useApp'
 import { useSettings } from '../stores/settings'
-import { rich, type Key } from '../i18n/core'
+import { rich } from '../i18n/core'
 import { useT } from '../i18n/useT'
 
-// National emergency numbers, free from any phone in Sri Lanka.
-const EMERGENCY = ['117', '119', '110', '1990']
 
 export default function AlertsPage() {
   const { readings, updatedAt, weather } = useNowcast()
@@ -33,20 +32,7 @@ export default function AlertsPage() {
       <NotifyToggle />
 
       <h2 className="mb-2 mt-8 text-lg font-bold">{t('emergency.title')}</h2>
-      <ul className="grid gap-2 sm:grid-cols-2">
-        {EMERGENCY.map((n) => (
-          <li key={n}>
-            <a href={`tel:${n}`} className="flex items-center gap-3 rounded-xl border border-line bg-surface p-3 hover:border-rambutan">
-              <span className="grid size-10 shrink-0 place-items-center rounded-full bg-rambutan-soft text-rambutan"><Phone className="size-4" aria-hidden /></span>
-              <span className="min-w-0">
-                <span className="block text-xl font-extrabold leading-tight">{n}</span>
-                <span className="block text-sm font-semibold">{t(`emergency.${n}.who` as Key)}</span>
-                <span className="block text-xs text-muted">{t(`emergency.${n}.what` as Key)}</span>
-              </span>
-            </a>
-          </li>
-        ))}
-      </ul>
+      <EmergencyContacts />
 
       <h2 className="mb-2 mt-8 text-lg font-bold">{t('thresholds.title')}</h2>
       <div className="overflow-x-auto rounded-xl border border-line bg-surface">

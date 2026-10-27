@@ -136,6 +136,8 @@ export default function StationPage() {
           <Stat label={t('stat.pressure')} value={fmt(now.pressure)} unit="hPa" />
           <Stat label={t('stat.today')} value={`${fmt(now.tMax)}°`} sub={t('stat.low', { t: fmt(now.tMin) })} />
           <Stat label={t('stat.gustsToday')} value={fmt(now.gustMaxToday)} unit="km/h" />
+          <Stat label={t('stat.elevation')} value={fmt(now.elevation)} unit="m" sub={t('stat.elevationSub')} />
+          {now.flood && <Stat label={t('stat.flood')} value={t(`floodLevel.${now.flood.level}` as Key)} sub={<Link to="/floods" className="hover:underline">{t('flood.score', { n: now.flood.score })}</Link>} />}
         </section>
       ) : (
         <Skeleton className="h-24" />

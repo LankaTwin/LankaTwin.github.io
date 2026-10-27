@@ -12,6 +12,8 @@ import type { RiverReading, StationReading } from '../hooks/useLiveData'
 import { useT } from '../i18n/useT'
 import { placeName, riverNames } from '../lib/places'
 import { metricText, riverLevelText } from '../lib/metrics'
+import { FLOOD_LEVELS } from '../lib/flood'
+import type { Feature, FeatureCollection } from 'geojson'
 
 const STYLES = {
   light: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
@@ -30,6 +32,8 @@ export interface OverlayDef {
 
 export const OVERLAYS: OverlayDef[] = [
   { id: 'truecolor', label: 'Satellite (true colour)', layer: 'MODIS_Terra_CorrectedReflectance_TrueColor', format: 'image/jpeg', dated: true, maxZoom: 9, note: 'MODIS Terra daily mosaic, 250 m. Pick a date; today is usually incomplete.' },
+  // LANCE MODIS near-real-time Global Flood Product: 250 m, water outside its usual extent over 3 days.
+  { id: 'flood', label: 'Flood water (MODIS, 3-day)', layer: 'MODIS_Combined_Flood_3-Day', format: 'image/png', dated: true, maxZoom: 9, note: 'NASA near-real-time flood map.' },
   { id: 'ndvi', label: 'Vegetation (NDVI)', layer: 'MODIS_Terra_NDVI_8Day', format: 'image/png', dated: false, maxZoom: 9, note: 'Latest MODIS 8-day NDVI composite. Greener means denser, healthier vegetation.' },
   { id: 'imerg', label: 'Rain rate (IMERG)', layer: 'IMERG_Precipitation_Rate', format: 'image/png', dated: false, maxZoom: 6, note: 'GPM IMERG satellite precipitation estimate, latest 30-minute step.' },
   { id: 'lst', label: 'Land surface temp.', layer: 'MODIS_Terra_Land_Surface_Temp_Day', format: 'image/png', dated: true, maxZoom: 7, note: 'MODIS daytime land surface temperature. Clouds leave gaps.' },
@@ -49,10 +53,14 @@ interface Props {
   focus?: { lon: number; lat: number; zoom?: number }
   /** Show a "you are here" dot. */
   userLocation?: { lon: number; lat: number }
+  /** Tap on the map away from any chip. */
+  onPick?: (lat: number, lon: number) => void
+  /** Show a pin at the picked spot. */
+  picked?: { lon: number; lat: number }
   className?: string
 }
 
-export default function MapView({ readings, rivers, selected, onSelect, focus, userLocation, className }: Props) {
+export default function MapView({ readings, rivers, selected, onSelect, focus, userLocation, onPick, picked, className }: Props) {
   const box = useRef<HTMLDivElement>(null)
   const map = useRef<MLMap | null>(null)
   const stationMarkers = useRef(new Map<string, Marker>())
@@ -60,8 +68,11 @@ export default function MapView({ readings, rivers, selected, onSelect, focus, u
   const userMarker = useRef<Marker | null>(null)
   const onSelectRef = useRef(onSelect)
   onSelectRef.current = onSelect
+  const onPickRef = useRef(onPick)
+  onPickRef.current = onPick
+  const pickMarker = useRef<Marker | null>(null)
 
-  const { theme, metric, overlay, overlayOpacity, overlayDate, showRivers, showStations } = useSettings()
+  const { theme, metric, overlay, overlayOpacity, overlayDate, showRivers, showStations, showFlood } = useSettings()
   const { t, lang } = useT()
 
   // Create the map once.
@@ -89,6 +100,8 @@ export default function MapView({ readings, rivers, selected, onSelect, focus, u
     m.touchZoomRotate.disableRotation()
     m.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
     m.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-right')
+    // Chips stop their own clicks, so a map click is always a tap on open ground.
+    m.on('click', (e) => onPickRef.current?.(e.lngLat.lat, e.lngLat.lng))
     map.current = m
     const ro = new ResizeObserver(() => m.resize())
     ro.observe(box.current)
@@ -99,6 +112,7 @@ export default function MapView({ readings, rivers, selected, onSelect, focus, u
       stationMarkers.current.clear()
       riverMarkers.current.clear()
       userMarker.current = null
+      pickMarker.current = null
     }
   }, [])
 
@@ -159,6 +173,55 @@ export default function MapView({ readings, rivers, selected, onSelect, focus, u
     el.title = t('dash.youAreHere')
     userMarker.current = new maplibregl.Marker({ element: el }).setLngLat([userLocation.lon, userLocation.lat]).addTo(m)
   }, [userLocation]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    const m = map.current
+    if (!m) return
+    pickMarker.current?.remove()
+    pickMarker.current = null
+    if (!picked) return
+    const el = document.createElement('div')
+    el.className = 'lt-pin'
+    el.setAttribute('aria-label', t('spot.marker'))
+    pickMarker.current = new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat([picked.lon, picked.lat]).addTo(m)
+  }, [picked]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Flood risk overlay: soft circles at towns (by flood score) and river points (by rise), under the chips.
+  useEffect(() => {
+    const m = map.current
+    if (!m) return
+    const features: Feature[] = []
+    if (showFlood) {
+      for (const r of readings ?? []) {
+        if (!r.flood) continue
+        features.push({ type: 'Feature', geometry: { type: 'Point', coordinates: [r.station.lon, r.station.lat] }, properties: { v: r.flood.score, c: FLOOD_LEVELS[r.flood.level].color } })
+      }
+      for (const rv of rivers ?? []) {
+        const v = Math.min(100, Math.max(0, ((rv.ratio ?? 1) - 1) * 25))
+        features.push({ type: 'Feature', geometry: { type: 'Point', coordinates: [rv.point.lon, rv.point.lat] }, properties: { v, c: RIVER_LEVELS[rv.level].color } })
+      }
+    }
+    const data: FeatureCollection = { type: 'FeatureCollection', features }
+    const apply = () => {
+      const src = m.getSource('lt-flood') as maplibregl.GeoJSONSource | undefined
+      if (src) { src.setData(data); return }
+      m.addSource('lt-flood', { type: 'geojson', data })
+      const firstSymbol = m.getStyle().layers?.find((l) => l.type === 'symbol')?.id
+      m.addLayer({
+        id: 'lt-flood', type: 'circle', source: 'lt-flood',
+        paint: {
+          'circle-color': ['get', 'c'],
+          'circle-opacity': ['interpolate', ['linear'], ['get', 'v'], 0, 0.12, 100, 0.5],
+          'circle-blur': 0.6,
+          // Grows with the score and with zoom, so the island reads as a risk surface.
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 6, ['+', 10, ['*', ['get', 'v'], 0.35]], 10, ['+', 40, ['*', ['get', 'v'], 1.6]]],
+        },
+      }, firstSymbol)
+    }
+    if (m.isStyleLoaded()) apply()
+    m.on('style.load', apply)
+    return () => { m.off('style.load', apply) }
+  }, [readings, rivers, showFlood, theme])
 
   // Station value chips.
   useEffect(() => {

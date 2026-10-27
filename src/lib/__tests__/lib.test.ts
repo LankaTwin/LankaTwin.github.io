@@ -10,8 +10,8 @@ import type { RiverReading, StationReading } from '../../hooks/useLiveData'
 
 function reading(id: string, values: Partial<StationReading['values']> = {}, extra: Partial<StationReading> = {}): StationReading {
   return {
-    station: stationById(id)!, time: '2026-10-27T12:00',
-    values: { temp: 30, feels: 33, rain24: 0, rainNext24: 0, humidity: 70, gust: 20, aqi: 40, pm25: 10, ...values },
+    station: stationById(id)!, time: '2026-10-27T12:00', elevation: 10,
+    values: { temp: 30, feels: 33, rain24: 0, rainNext24: 0, flood: 0, humidity: 70, gust: 20, aqi: 40, pm25: 10, ...values },
     weatherCode: 1, isDay: true, windSpeed: 10, windDir: 220, cloud: 20, pressure: 1008, tMax: 31, tMin: 25,
     feelsMaxToday: 34, feelsMaxTomorrow: 34, rainProbNext24: 10, uvMax: 9, gustMaxToday: 25, ...extra,
   }

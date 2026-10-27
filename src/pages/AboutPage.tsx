@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useSettings } from '../stores/settings'
-import Landscape from '../components/Landscape'
+import Scene from '../components/Scene'
 import { REPO_URL } from '../components/Layout'
 import { useTitle } from '../hooks/useApp'
 import { LANGS, rich, type Key, type Lang } from '../i18n/core'
@@ -18,6 +18,8 @@ const ROADMAP: { phase: 'Now' | 'Next' | 'Later'; items: [Key, boolean][] }[] = 
     ['road.space', true],
     ['road.embed', true],
     ['road.i18n', true],
+    ['road.floods', true],
+    ['road.spot', true],
   ] },
   { phase: 'Next', items: [
     ['road.gauges', false],
@@ -38,9 +40,9 @@ export default function AboutPage() {
   return (
     <div className="prose-lt mx-auto max-w-3xl px-4 py-6">
       <div className="mb-6 grid grid-cols-3 gap-2 overflow-hidden rounded-2xl" aria-hidden>
-        <Landscape zone="coast" className="h-28 w-full sm:h-40" />
-        <Landscape zone="hills" className="h-28 w-full sm:h-40" />
-        <Landscape zone="plains" className="h-28 w-full sm:h-40" />
+        <Scene id="coast" shade={false} caption={false} sizes="33vw" className="h-28 w-full sm:h-40" />
+        <Scene id="hills" shade={false} caption={false} sizes="33vw" className="h-28 w-full sm:h-40" />
+        <Scene id="plains" shade={false} caption={false} sizes="33vw" className="h-28 w-full sm:h-40" />
       </div>
       <h1 className="mb-3 text-3xl font-extrabold tracking-tight">{t('about.title')}</h1>
       <p className="text-lg">{t('about.lead')}</p>

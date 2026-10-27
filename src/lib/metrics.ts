@@ -1,7 +1,7 @@
 // Map variables, colour scales, thresholds and weather-code text.
 import type { Key, T } from '../i18n/core'
 
-export type MetricId = 'temp' | 'feels' | 'rain24' | 'rainNext24' | 'humidity' | 'gust' | 'aqi' | 'pm25'
+export type MetricId = 'temp' | 'feels' | 'rain24' | 'rainNext24' | 'flood' | 'humidity' | 'gust' | 'aqi' | 'pm25'
 
 export interface Metric {
   id: MetricId
@@ -35,6 +35,11 @@ export const METRICS: Record<MetricId, Metric> = {
     steps: [[0.5, '#8a9ca1', 'dry'], [5, '#5aa6cf', '<5'], [25, '#2f86c0', '5–25'], [50, '#2156a3', '25–50'], [100, '#5a3ca5', '50–100'], [150, '#a3339b', '100–150'], [Infinity, '#c23a2e', '150+']],
     help: 'Forecast precipitation for the coming 24 hours, mm.',
   },
+  flood: {
+    id: 'flood', label: 'Flood risk', short: 'Flood', unit: '', decimals: 0,
+    steps: [[25, '#3fa3ad', 'flood-low'], [45, '#c99a1c', 'flood-moderate'], [65, '#d9692a', 'flood-high'], [Infinity, '#c23a2e', 'flood-very-high']],
+    help: 'Screening score 0–100 from rain, the nearest river and how low-lying the town is.',
+  },
   humidity: {
     id: 'humidity', label: 'Relative humidity', short: 'Humidity', unit: '%', decimals: 0,
     steps: [[50, '#b5893a', '<50'], [65, '#8f9b4a', '50–65'], [80, '#3fa3ad', '65–80'], [90, '#2f86c0', '80–90'], [Infinity, '#2156a3', '90+']],
@@ -57,7 +62,7 @@ export const METRICS: Record<MetricId, Metric> = {
   },
 }
 
-export const METRIC_ORDER: MetricId[] = ['temp', 'feels', 'rain24', 'rainNext24', 'humidity', 'gust', 'aqi', 'pm25']
+export const METRIC_ORDER: MetricId[] = ['temp', 'feels', 'rain24', 'rainNext24', 'flood', 'humidity', 'gust', 'aqi', 'pm25']
 
 export function colorFor(metric: Metric, v: number | null | undefined) {
   if (v == null || Number.isNaN(v)) return '#9aa7aa'
@@ -89,6 +94,7 @@ export function uvBand(uv: number | null | undefined, t: T) {
 const BAND_KEYS: Record<string, Key> = {
   dry: 'band.dry', Good: 'band.good', Moderate: 'band.moderate', Sensitive: 'band.sensitive',
   Unhealthy: 'band.unhealthy', 'Very unhealthy': 'band.veryUnhealthy', Hazardous: 'band.hazardous',
+  'flood-low': 'floodLevel.low', 'flood-moderate': 'floodLevel.moderate', 'flood-high': 'floodLevel.high', 'flood-very-high': 'floodLevel.very-high',
 }
 
 /** Legend labels are numeric ranges or a few words; translate the words. */
