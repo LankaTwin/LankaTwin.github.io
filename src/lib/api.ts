@@ -219,6 +219,8 @@ export async function fetchSpot(lat: number, lon: number, signal?: AbortSignal):
 
 export interface PlacePhoto {
   src: string
+  /** Full-size original on upload.wikimedia.org, for Cloudinary to resize. */
+  original: string
   width: number
   height: number
   pageUrl: string
@@ -248,7 +250,7 @@ export async function fetchPlacePhoto(title: string, signal?: AbortSignal): Prom
   if (sum.type === 'disambiguation' || !img || !sum.originalimage) return null
   // Ask for a 1280 px rendition: thumbnails come as .../NNNpx-Name.jpg.
   const src = img.source.replace(/\/(\d+)px-/, (_m, n) => `/${Math.max(Number(n), Math.min(1280, sum.originalimage!.width))}px-`)
-  const photo: PlacePhoto = { src, width: sum.originalimage.width, height: sum.originalimage.height, pageUrl: sum.content_urls?.desktop?.page ?? `https://en.wikipedia.org/wiki/${t}` }
+  const photo: PlacePhoto = { src, original: sum.originalimage.source, width: sum.originalimage.width, height: sum.originalimage.height, pageUrl: sum.content_urls?.desktop?.page ?? `https://en.wikipedia.org/wiki/${t}` }
   try {
     const file = decodeURIComponent(sum.originalimage.source.split('/').pop() ?? '')
     const info = await fetchJson<ImageInfo>('Wikimedia Commons', `https://en.wikipedia.org/w/api.php?${qs({

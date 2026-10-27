@@ -18,6 +18,7 @@ export interface SearchItem {
 const PAGES: [Key, string, string][] = [
   ['nav.map', '/', 'live map home'],
   ['nav.places', '/stations', 'all towns table districts'],
+  ['nav.live', '/live', 'live dashboard real-time realtime kiosk wall screen alerts feed'],
   ['nav.floods', '/floods', 'flood risk water map support evacuation safety help 117 elevation'],
   ['nav.rivers', '/rivers', 'discharge flood glofas'],
   ['nav.air', '/air', 'air quality aqi pm2.5 pollution smog dust ozone'],

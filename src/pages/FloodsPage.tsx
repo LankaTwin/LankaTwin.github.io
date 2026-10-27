@@ -60,7 +60,26 @@ export default function FloodsPage() {
           <h2 className="text-xl font-bold">{t('floods.riskTitle')}</h2>
           <p className="mb-3 text-sm text-muted">{t('floods.riskIntro')}</p>
           {!readings ? <Skeleton className="h-96" /> : (
-            <div className="overflow-x-auto rounded-xl border border-line bg-surface">
+<>
+            <ul className="space-y-1.5 sm:hidden">
+              {ranked.map((r) => {
+                const f = r.flood!
+                const c = FLOOD_LEVELS[f.level].color
+                const near = nearestRiver(r.station, rivers)
+                return (
+                  <li key={r.station.id}>
+                    <Link to={`/station/${r.station.id}`} className="flex items-center gap-3 rounded-xl border border-line bg-surface p-2.5">
+                      <span className="grid size-11 shrink-0 place-items-center rounded-lg text-lg font-extrabold" style={{ background: c, color: inkOn(c) }}>{f.score}</span>
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate font-semibold">{placeName(r.station, lang)} <span className="text-xs font-medium text-muted">· {t(`floodLevel.${f.level}` as Key)}</span></div>
+                        <div className="truncate text-xs text-muted">{fmt(Math.max(r.values.rain24 ?? 0, r.values.rainNext24 ?? 0))} mm · {fmt(r.elevation)} m{near ? ` · ${riverNames(near.point, lang).river}` : ''}</div>
+                      </div>
+                    </Link>
+                  </li>
+                )
+              })}
+            </ul>
+            <div className="hidden overflow-x-auto sm:block rounded-xl border border-line bg-surface">
               <table className="w-full min-w-[560px] text-sm">
                 <thead>
                   <tr className="border-b border-line text-left text-muted">
@@ -95,6 +114,7 @@ export default function FloodsPage() {
                 </tbody>
               </table>
             </div>
+        </>
           )}
           <p className="mt-2 text-xs text-muted"><Freshness at={updatedAt} fetching={weather.isFetching} /></p>
         </section>

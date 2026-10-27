@@ -38,12 +38,16 @@ export default function StationsPage() {
           <h1 className="text-3xl font-extrabold tracking-tight">{t('places.title')}</h1>
           <p className="text-muted">{t('places.intro')}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <label className="text-sm text-muted" htmlFor="prov">{t('places.show')}</label>
           <select id="prov" value={prov} onChange={(e) => setProv(e.target.value)} className="rounded-lg border border-line bg-surface px-2 py-1.5 text-sm">
             <option value="All">{t('places.all')}</option>
             <option value="Starred">{t('places.starred')}</option>
             {PROVINCES.map((p) => <option key={p} value={p}>{t('common.province', { name: t(`prov.${p}` as Key) })}</option>)}
+          </select>
+          <select aria-label={t('places.place')} value={sort} onChange={(e) => setSort(e.target.value as MetricId | 'name')} className="rounded-lg border border-line bg-surface px-2 py-1.5 text-sm sm:hidden">
+            <option value="name">{t('places.place')}</option>
+            {METRIC_ORDER.map((m) => <option key={m} value={m}>{metricText(m, t).label}</option>)}
           </select>
           <button
             disabled={!readings}
@@ -58,7 +62,30 @@ export default function StationsPage() {
       </div>
       {weather.error && <div className="mb-3"><SourceProblem error={weather.error} onRetry={() => weather.refetch()} /></div>}
       {!readings ? <Skeleton className="h-96" /> : (
-        <div className="overflow-x-auto rounded-xl border border-line bg-surface">
+<>
+        <ul className="space-y-1.5 sm:hidden">
+          {rows.length === 0 && <li className="rounded-xl border border-dashed border-line p-6 text-center text-sm text-muted">{t(prov === 'Starred' ? 'places.noStarred' : 'places.none')}</li>}
+          {rows.map((r) => {
+            const m = sort === 'name' ? 'temp' : sort
+            const v = r.values[m]
+            const c = colorFor(METRICS[m], v)
+            return (
+              <li key={r.station.id} className="flex items-center gap-2 rounded-xl border border-line bg-surface p-2.5">
+                <FavoriteButton id={r.station.id} name={placeName(r.station, lang)} />
+                <WeatherIcon code={r.weatherCode} isDay={r.isDay ?? true} className="size-9 shrink-0" />
+                <Link to={`/station/${r.station.id}`} className="min-w-0 flex-1">
+                  <div className="truncate font-semibold">{placeName(r.station, lang)}</div>
+                  <div className="truncate text-xs text-muted">{weatherText(r.weatherCode, t)} · {fmt(r.values.rainNext24)} mm · AQI {fmt(r.values.aqi)}</div>
+                </Link>
+                <div className="shrink-0 text-right">
+                  <div className="text-lg font-extrabold leading-tight">{fmt(r.values.temp)}°</div>
+                  {m !== 'temp' && <span className="rounded px-1.5 text-xs font-semibold" style={{ background: c, color: inkOn(c) }}>{metricText(m, t).short} {fmt(v, METRICS[m].decimals)}</span>}
+                </div>
+              </li>
+            )
+          })}
+        </ul>
+        <div className="hidden overflow-x-auto sm:block rounded-xl border border-line bg-surface">
           <table className="w-full min-w-[820px] text-sm">
             <thead>
               <tr className="border-b border-line text-left text-muted">
@@ -106,6 +133,7 @@ export default function StationsPage() {
             </tbody>
           </table>
         </div>
+        </>
       )}
       <p className="mt-3 text-xs text-muted">
         <Freshness at={updatedAt} fetching={weather.isFetching} />. {t('places.units')}

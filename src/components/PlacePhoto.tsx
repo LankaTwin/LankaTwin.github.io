@@ -6,6 +6,7 @@ import type { Key } from '../i18n/core'
 import { useT } from '../i18n/useT'
 import type { Sky } from './Landscape'
 import Scene from './Scene'
+import { cldFetch, cldFetchSrcSet } from '../lib/cloudinary'
 
 /**
  * A photo of the place from its Wikipedia article, credited to its author. Falls
@@ -21,10 +22,11 @@ export default function PlacePhoto({ station, sky, className = '', children }: {
   })
   const { t, lang } = useT()
   const name = placeName(station, lang)
-  const [failed, setFailed] = useState(false)
+  // Try Cloudinary first, then the Wikimedia image itself, then give up and keep the scene.
+  const [via, setVia] = useState<'cdn' | 'direct' | 'failed'>('cdn')
   const [loaded, setLoaded] = useState(false)
   const p = q.data
-  const showPhoto = p && !failed
+  const showPhoto = p && via !== 'failed'
 
   return (
     <figure className={`relative overflow-hidden bg-sunken ${className}`}>
@@ -32,13 +34,15 @@ export default function PlacePhoto({ station, sky, className = '', children }: {
       <Scene id={station.zone} sky={sky} shade={false} caption={!showPhoto || !loaded} className="absolute inset-0 h-full w-full" label={showPhoto && loaded ? undefined : t(`place.illustration.${station.zone}` as Key, { place: name })} />
       {showPhoto && (
         <img
-          src={p.src}
+          src={via === 'cdn' ? cldFetch(p.original, 'c_limit,w_1280') : p.src}
+          srcSet={via === 'cdn' ? cldFetchSrcSet(p.original) : undefined}
+          sizes="(min-width: 1152px) 1120px, 100vw"
           alt={t('place.photoAlt', { place: name, district: districtName(station.district, lang) })}
           loading="lazy"
           decoding="async"
           referrerPolicy="no-referrer"
           onLoad={() => setLoaded(true)}
-          onError={() => setFailed(true)}
+          onError={() => setVia((v) => (v === 'cdn' ? 'direct' : 'failed'))}
           className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'}`}
         />
       )}

@@ -17,6 +17,7 @@ const AboutPage = lazy(() => import('./pages/AboutPage'))
 const EmbedPage = lazy(() => import('./pages/EmbedPage'))
 const FloodsPage = lazy(() => import('./pages/FloodsPage'))
 const AirPage = lazy(() => import('./pages/AirPage'))
+const LivePage = lazy(() => import('./pages/LivePage'))
 
 const wrap = (el: React.ReactNode) => <Suspense fallback={<div className="mx-auto max-w-6xl p-6"><Skeleton className="h-64" /></div>}>{el}</Suspense>
 
@@ -46,6 +47,7 @@ const router = createHashRouter([
           { path: 'stations', element: wrap(<StationsPage />) },
           { path: 'rivers', element: wrap(<RiversPage />) },
           { path: 'rivers/:id', element: wrap(<RiversPage />) },
+          { path: 'live', element: wrap(<LivePage />) },
           { path: 'floods', element: wrap(<FloodsPage />) },
           { path: 'air', element: wrap(<AirPage />) },
           { path: 'compare', element: wrap(<ComparePage />) },

@@ -20,6 +20,7 @@ interface Settings {
   compare: string[]
   favorites: string[]
   notify: boolean
+  alertSound: boolean
   setTheme: (t: Theme) => void
   setLang: (l: Lang) => void
   setMetric: (m: MetricId) => void
@@ -33,6 +34,7 @@ interface Settings {
   setCompare: (ids: string[]) => void
   toggleFavorite: (id: string) => void
   setNotify: (on: boolean) => void
+  setAlertSound: (on: boolean) => void
 }
 
 const initialTheme = (): Theme =>
@@ -59,6 +61,7 @@ export const useSettings = create<Settings>()(
       compare: ['colombo', 'kandy', 'jaffna'],
       favorites: [],
       notify: false,
+      alertSound: false,
       setTheme: (theme) => {
         document.documentElement.classList.toggle('dark', theme === 'dark')
         try { localStorage.setItem('lt-theme', theme) } catch { /* storage blocked */ }
@@ -76,12 +79,13 @@ export const useSettings = create<Settings>()(
       setCompare: (compare) => set({ compare }),
       toggleFavorite: (id) => set((s) => ({ favorites: s.favorites.includes(id) ? s.favorites.filter((x) => x !== id) : [...s.favorites, id] })),
       setNotify: (notify) => set({ notify }),
+      setAlertSound: (alertSound) => set({ alertSound }),
     }),
     {
       name: 'lt-settings',
       version: 1,
-      partialize: ({ lang, metric, overlay, overlayOpacity, showRivers, showStations, showFlood, refreshMinutes, compare, favorites, notify }) =>
-        ({ lang, metric, overlay, overlayOpacity, showRivers, showStations, showFlood, refreshMinutes, compare, favorites, notify }),
+      partialize: ({ lang, metric, overlay, overlayOpacity, showRivers, showStations, showFlood, refreshMinutes, compare, favorites, notify, alertSound }) =>
+        ({ lang, metric, overlay, overlayOpacity, showRivers, showStations, showFlood, refreshMinutes, compare, favorites, notify, alertSound }),
     },
   ),
 )

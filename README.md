@@ -21,6 +21,8 @@ straight from the publishers into an interactive map and charts, with no server 
 - **Forecast detail**: next-24-hour strip, 7-day outlook with UV and gusts, the current monsoon season, and the rivers near each town.
 - **Share and embed**: share any place, or paste a live `<iframe>` widget into another site (`#/embed/<place>`).
 - **Safety**: emergency numbers (117, 119, 110, 1990) and opt-in browser notifications for new warnings while the app is open.
+- **Live dashboard** (`#/live`): KPI tiles, a running alert feed (new, escalated and cleared signals with times), town and river boards, a refresh countdown, full screen, keep-screen-on and an optional chime for new warnings. A warning banner and a signal badge in the header show on every page.
+- **Phones first**: bottom tab bar (Map, Live, Floods, Signals, More), card layouts in place of wide tables, safe-area padding for notched screens.
 - **Floods**: a screening flood-risk score for every town (rain, nearest river, elevation), a flood-risk overlay and the NASA MODIS near-real-time flood-water layer on the map, rivers running high, and before/during/after flood guidance with emergency numbers (117, 119, 110, 1990, 1919).
 - **Any spot**: tap anywhere on the map for its elevation (Copernicus 90 m DEM), weather, air quality, modelled river flow and flood risk; the spot is kept in the URL so it can be shared.
 - **Air quality page**: US AQI, PM2.5, PM10, ozone, NO₂, dust and UV for every town, with health advice for each AQI band.
@@ -61,7 +63,7 @@ Vite · React 19 · TypeScript · Tailwind CSS 4 · MapLibre GL · Apache EChart
 | [CARTO](https://carto.com/basemaps) / OpenStreetMap | Basemap |
 | [Wikipedia](https://en.wikipedia.org) / [Wikimedia Commons](https://commons.wikimedia.org) | Place photos, credited per image |
 | [Open-Meteo Elevation](https://open-meteo.com/en/docs/elevation-api) (Copernicus DEM GLO-90) | Elevation of towns and tapped spots |
-| [Cloudinary](https://cloudinary.com) | Hosting and on-the-fly optimisation of the landscape scenes and link-preview image (`src/lib/cloudinary.ts`) |
+| [Cloudinary](https://cloudinary.com) | Hosting and on-the-fly optimisation of the landscape scenes and link-preview image, and fetch delivery of town photos (`src/lib/cloudinary.ts`) |
 
 Full licences and attribution are on the in-app **Sources** page. National sources (Meteorology, Irrigation, DMC, data.gov.lk) are
 planned through scheduled snapshots — see [`docs/DATA_CONNECTORS.md`](docs/DATA_CONNECTORS.md).

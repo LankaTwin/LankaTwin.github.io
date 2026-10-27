@@ -52,7 +52,25 @@ export default function AirPage() {
 
       {air.error && <div className="mb-3"><SourceProblem error={air.error} onRetry={() => air.refetch()} /></div>}
       {!readings ? <Skeleton className="h-96" /> : (
-        <div className="overflow-x-auto rounded-xl border border-line bg-surface">
+<>
+        <ul className="space-y-1.5 sm:hidden">
+          {rows.map((r) => {
+            const aqi = r.air?.aqi
+            const c = colorFor(METRICS.aqi, aqi)
+            return (
+              <li key={r.station.id}>
+                <Link to={`/station/${r.station.id}`} className="flex items-center gap-3 rounded-xl border border-line bg-surface p-2.5">
+                  <span className="grid size-11 shrink-0 place-items-center rounded-lg text-base font-extrabold" style={aqi != null ? { background: c, color: inkOn(c) } : undefined}>{fmt(aqi)}</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate font-semibold">{placeName(r.station, lang)} <span className="text-xs font-medium text-muted">· {bandText(bandFor(METRICS.aqi, aqi), t)}</span></div>
+                    <div className="truncate text-xs text-muted">PM2.5 {fmt(r.air?.pm25)} · PM10 {fmt(r.air?.pm10)} · {t('air.ozone')} {fmt(r.air?.ozone)} · UV {fmt(r.air?.uv, 1)}</div>
+                  </div>
+                </Link>
+              </li>
+            )
+          })}
+        </ul>
+        <div className="hidden overflow-x-auto sm:block rounded-xl border border-line bg-surface">
           <table className="w-full min-w-[720px] text-sm">
             <thead>
               <tr className="border-b border-line text-left text-muted">
@@ -91,6 +109,7 @@ export default function AirPage() {
             </tbody>
           </table>
         </div>
+        </>
       )}
       <p className="mt-3 text-xs text-muted"><Freshness at={updatedAt} fetching={air.isFetching} /> · {t('air.units')}</p>
 
