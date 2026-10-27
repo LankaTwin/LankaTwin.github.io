@@ -11,22 +11,29 @@ import SeasonCard from '../components/SeasonCard'
 import SpotCard from '../components/SpotCard'
 import { FLOOD_LEVELS } from '../lib/flood'
 import { districtName, nearestStation, placeName, riverNames } from '../lib/places'
-import { addDays } from '../lib/time'
+import { addDays, timeAgo } from '../lib/time'
 import { rich, type Key } from '../i18n/core'
 import { useT } from '../i18n/useT'
 import { useNowcast, useRivers, type RiverReading, type StationReading } from '../hooks/useLiveData'
+import { useGauges } from '../hooks/useGauges'
 import { buildAlerts } from '../lib/alerts'
 import { bandFor, bandText, colorFor, compass, fmt, inkOn, METRIC_ORDER, METRICS, metricText, RIVER_LEVELS, riverLevelText, uvBand, weatherText } from '../lib/metrics'
 import { useSettings, yesterday, type Overlay } from '../stores/settings'
+import { GAUGE_LEVEL_ORDER, GAUGE_LEVELS, type GaugeStation } from '../lib/gauges'
+import GaugeLevelTile from '../components/GaugeLevelTile'
+import GaugeStrip from '../components/GaugeStrip'
 
 export default function Dashboard() {
   const { readings, weather, air, updatedAt } = useNowcast()
   const { rivers, query: riverQ } = useRivers()
+  const { gauges, query: gaugeQ } = useGauges()
+  const showGauges = useSettings((x) => x.showGauges)
   const [params, setParams] = useSearchParams()
   const sel = params.get('s') ?? undefined
-  const kind = params.get('k') === 'river' ? 'river' : 'station'
+  const k = params.get('k')
+  const kind = k === 'river' || k === 'gauge' ? k : 'station'
   const { t, lang } = useT()
-  const alerts = useMemo(() => buildAlerts(readings, rivers, lang), [readings, rivers, lang])
+  const alerts = useMemo(() => buildAlerts(readings, rivers, lang, gauges), [readings, rivers, lang, gauges])
   const [focus, setFocus] = useState<{ lon: number; lat: number; zoom?: number }>()
   const [me, setMe] = useState<{ lon: number; lat: number }>()
   const [locating, setLocating] = useState(false)
@@ -36,7 +43,7 @@ export default function Dashboard() {
   // A tapped spot lives in the URL too (?p=lat,lon), so it can be shared.
   const pp = params.get('p')?.split(',').map(Number)
   const spot = pp && pp.length === 2 && pp.every(Number.isFinite) ? { lat: pp[0], lon: pp[1] } : undefined
-  const select = (id: string, k: 'station' | 'river') => setParams({ s: id, k }, { replace: true })
+  const select = (id: string, k: 'station' | 'river' | 'gauge') => setParams({ s: id, k }, { replace: true })
   const pick = (lat: number, lon: number) => setParams({ p: `${lat.toFixed(4)},${lon.toFixed(4)}` }, { replace: true })
   const clear = () => setParams({}, { replace: true })
 
@@ -72,11 +79,13 @@ export default function Dashboard() {
 
   const selStation = kind === 'station' ? readings?.find((r) => r.station.id === sel) : undefined
   const selRiver = kind === 'river' ? rivers?.find((r) => r.point.id === sel) : undefined
+  const selGauge = kind === 'gauge' ? gauges?.find((g) => g.id === sel) : undefined
+  const none = !spot && !selStation && !selRiver && !selGauge
 
   return (
     <div className="flex h-full flex-col overflow-y-auto lg:flex-row lg:overflow-hidden">
       <div className="relative h-[62vh] shrink-0 lg:h-auto lg:flex-1">
-        <MapView key={lang} readings={readings} rivers={rivers} selected={sel} onSelect={select} onPick={pick} picked={spot} focus={focus} userLocation={me} className="absolute inset-0" />
+        <MapView key={lang} readings={readings} rivers={rivers} gauges={gauges} selected={sel} onSelect={select} onPick={pick} picked={spot} focus={focus} userLocation={me} className="absolute inset-0" />
         <MetricBar />
         <LayerMenu>
           <button
@@ -100,13 +109,16 @@ export default function Dashboard() {
           {weather.error && <SourceProblem error={weather.error} onRetry={() => weather.refetch()} />}
           {air.error && !weather.error && <SourceProblem error={air.error} onRetry={() => air.refetch()} />}
           {riverQ.error && <SourceProblem error={riverQ.error} onRetry={() => riverQ.refetch()} />}
+          {gaugeQ.error && showGauges && <SourceProblem error={gaugeQ.error} onRetry={() => gaugeQ.refetch()} />}
 
           {spot && <SpotCard key={`${spot.lat},${spot.lon}`} lat={spot.lat} lon={spot.lon} onClose={clear} />}
           {!spot && selStation && <StationCard r={selStation} onClose={clear} />}
           {!spot && selRiver && <RiverCard r={selRiver} onClose={clear} />}
-          {!spot && !selStation && !selRiver && <IslandNow readings={readings} rivers={rivers} />}
-          {!spot && !selStation && !selRiver && <p className="rounded-lg bg-lagoon-soft px-3 py-2 text-xs text-lagoon">{t('spot.hint')}</p>}
-          {!spot && !selStation && !selRiver && <Starred readings={readings} />}
+          {!spot && selGauge && <GaugeCard g={selGauge} onClose={clear} />}
+          {none && <IslandNow readings={readings} rivers={rivers} />}
+          {none && <GaugeStrip gauges={gauges} />}
+          {none && <p className="rounded-lg bg-lagoon-soft px-3 py-2 text-xs text-lagoon">{t('spot.hint')}</p>}
+          {none && <Starred readings={readings} />}
 
           <section>
             <div className="mb-2 flex items-baseline justify-between">
@@ -221,6 +233,17 @@ function LayerMenu({ children }: { children?: React.ReactNode }) {
             <legend className="sr-only">{t('layers.markers')}</legend>
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={s.showStations} onChange={s.toggleStations} className="accent-[var(--c-lagoon)]" /> {t('layers.towns')}</label>
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={s.showRivers} onChange={s.toggleRivers} className="accent-[var(--c-lagoon)]" /> {t('layers.rivers')}</label>
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={s.showGauges} onChange={(e) => s.setShowGauges(e.target.checked)} className="accent-[var(--c-lagoon)]" /> {t('layers.gauges')}</label>
+            {s.showGauges && (
+              <div className="flex flex-wrap gap-1 pl-6" aria-hidden>
+                {GAUGE_LEVEL_ORDER.map((k) => (
+                  <span key={k} className="rounded-[3px] px-1.5 py-0.5 text-[11px] font-semibold" style={{ background: GAUGE_LEVELS[k].color, color: inkOn(GAUGE_LEVELS[k].color) }}>{t(`gaugeLevel.${k}` as Key)}</span>
+                ))}
+              </div>
+            )}
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={s.showBasins} onChange={(e) => s.setShowBasins(e.target.checked)} className="accent-[var(--c-lagoon)]" /> {t('layers.basins')}</label>
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={s.showFloodAreas} onChange={(e) => s.setShowFloodAreas(e.target.checked)} className="accent-[var(--c-lagoon)]" /> {t('layers.floodAreas')}</label>
+            {s.showFloodAreas && <p className="pl-6 text-[11px] text-muted">{t('layers.floodAreasNote')}</p>}
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={s.showFlood} onChange={(e) => s.setShowFlood(e.target.checked)} className="accent-[var(--c-lagoon)]" /> {t('layers.flood')}</label>
             {s.showFlood && (
               <div className="flex flex-wrap gap-1 pl-6" aria-hidden>
@@ -379,3 +402,30 @@ function Starred({ readings }: { readings?: StationReading[] }) {
   )
 }
 
+
+function GaugeCard({ g, onClose }: { g: GaugeStation; onClose: () => void }) {
+  const { t, locale } = useT()
+  return (
+    <section className="rounded-xl border border-line bg-surface p-4">
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <h1 className="text-[22px] font-extrabold leading-tight tracking-tight">{g.name}</h1>
+          <p className="text-sm text-muted">{t('gauge.basin', { basin: g.basin || '—' })} · {t('gauge.official')}</p>
+        </div>
+        <button onClick={onClose} aria-label={t('common.close')} className="rounded p-1 text-muted hover:bg-sunken"><X className="size-4" /></button>
+      </div>
+      <GaugeLevelTile g={g} className="my-3" />
+      <div className="grid grid-cols-3 gap-3">
+        <Stat label={t('gauge.alertAt')} value={fmt(g.thresholds.alert, 2)} unit={g.unit} />
+        <Stat label={t('gauge.minorAt')} value={fmt(g.thresholds.minor, 2)} unit={g.unit} />
+        <Stat label={t('gauge.majorAt')} value={fmt(g.thresholds.major, 2)} unit={g.unit} />
+        <Stat label={t('gauge.rain1h')} value={fmt(g.rain1h, 1)} unit="mm" />
+        <Stat label={t('gauge.rain24h')} value={fmt(g.rain24h, 1)} unit="mm" />
+        <Stat label={t('gauge.change')} value={g.change != null ? `${g.change > 0 ? '+' : ''}${fmt(g.change, 2)}` : '—'} unit={g.unit} sub={g.latest ? timeAgo(g.latest.time, locale) : undefined} />
+      </div>
+      <Link to={`/gauges/${g.id}`} className="mt-4 flex items-center justify-between rounded-lg bg-lagoon px-3 py-2 text-sm font-semibold text-canvas hover:brightness-110">
+        {t('gauge.more')} <ChevronRight className="size-4" aria-hidden />
+      </Link>
+    </section>
+  )
+}

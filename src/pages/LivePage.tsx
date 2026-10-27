@@ -7,6 +7,9 @@ import WeatherIcon from '../components/WeatherIcon'
 import { SourceProblem, Skeleton } from '../components/ui'
 import { chime, useTitle } from '../hooks/useApp'
 import { useNowcast, useRivers, type StationReading } from '../hooks/useLiveData'
+import { useGauges } from '../hooks/useGauges'
+import { GAUGE_LEVELS, gaugeSummary } from '../lib/gauges'
+import { GaugeTrend } from '../components/GaugeLevelTile'
 import { FLOOD_LEVELS } from '../lib/flood'
 import { colorFor, fmt, inkOn, METRICS, RIVER_LEVELS, riverLevelText } from '../lib/metrics'
 import { placeName, riverNames } from '../lib/places'
@@ -43,6 +46,8 @@ export default function LivePage() {
   const qc = useQueryClient()
   const { readings, weather, air, updatedAt } = useNowcast()
   const { rivers, query: riverQ } = useRivers()
+  const { gauges, query: gaugeQ } = useGauges()
+  const gsum = useMemo(() => (gauges ? gaugeSummary(gauges) : undefined), [gauges])
   const { refreshMinutes, setRefresh, alertSound, setAlertSound } = useSettings()
   const entries = useAlertLog((s) => s.entries)
   const openedAt = useAlertLog((s) => s.openedAt)
@@ -55,9 +60,9 @@ export default function LivePage() {
   const log = useMemo(() => sortLog(Object.values(entries)), [entries])
   const active = log.filter((e) => !e.clearedAt)
   const warnings = active.filter((e) => e.level === 'warning').length
-  const fetching = weather.isFetching || air.isFetching || riverQ.isFetching
+  const fetching = weather.isFetching || air.isFetching || riverQ.isFetching || gaugeQ.isFetching
   const left = Math.max(0, Math.round((updatedAt + refreshMinutes * 60_000 - now) / 1000))
-  const refreshNow = () => qc.invalidateQueries({ predicate: (q) => ['nowcast', 'air-now', 'rivers'].includes(String(q.queryKey[0])) })
+  const refreshNow = () => qc.invalidateQueries({ predicate: (q) => ['nowcast', 'air-now', 'rivers', 'gauges'].includes(String(q.queryKey[0])) })
 
   // Worst active signal per town, to colour the town board.
   const worst = useMemo(() => {
@@ -106,9 +111,10 @@ export default function LivePage() {
 
       {weather.error && <SourceProblem error={weather.error} onRetry={() => weather.refetch()} />}
 
-      <section className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3" aria-label={t('live.title')}>
+      <section className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 xl:grid-cols-9" aria-label={t('live.title')}>
         <Kpi label={t('kpi.warnings')} value={readings ? warnings : undefined} tone={warnings ? 'warn' : 'ok'} to="/alerts" />
         <Kpi label={t('kpi.watches')} value={readings ? active.length - warnings : undefined} tone={active.length - warnings ? 'watch' : 'ok'} to="/alerts" />
+        <Kpi label={t('kpi.gauges')} value={gsum ? gsum.alert + gsum.minor + gsum.major : gaugeQ.error ? '—' : undefined} sub={gsum ? t('kpi.gaugesSub', { minor: gsum.minor, major: gsum.major }) : undefined} tone={gsum?.major || gsum?.minor ? 'warn' : gsum?.alert ? 'watch' : 'ok'} to="/gauges" className="col-span-2 sm:col-span-1" />
         <Kpi label={t('kpi.raining')} value={k?.raining} sub={readings ? t('kpi.of', { total: readings.length }) : undefined} />
         <Kpi label={t('kpi.rivers')} value={riversUp} sub={rivers ? t('kpi.ofPoints', { total: rivers.length }) : undefined} tone={riversUp ? 'watch' : 'ok'} to="/rivers" />
         <Kpi label={t('kpi.hottest')} value={k?.hot ? `${fmt(k.hot.values.feels)}°` : undefined} sub={name(k?.hot)} to={k?.hot && `/station/${k.hot.station.id}`} />
@@ -152,6 +158,23 @@ export default function LivePage() {
                         <span className="rounded px-1" style={{ background: aqiC, color: inkOn(aqiC) }}>AQI {fmt(r.values.aqi)}</span>
                         {fl && <span className="rounded px-1" style={{ background: fl, color: inkOn(fl) }}>{t('metric.flood.short')} {r.flood!.score}</span>}
                       </div>
+                    </Link>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+
+          <h2 className="mb-2 mt-5 text-lg font-bold">{t('live.gaugesBoard')} <Link to="/gauges" className="text-sm font-normal text-lagoon hover:underline">{t('gauges.open')}</Link></h2>
+          {gaugeQ.error ? <SourceProblem error={gaugeQ.error} onRetry={() => gaugeQ.refetch()} /> : !gauges ? <Skeleton className="h-32" /> : (
+            <ul className="grid gap-1.5 sm:grid-cols-2 xl:grid-cols-3">
+              {gauges.filter((g) => g.latest && !g.rainOnly).slice(0, 12).map((g) => {
+                const c = g.stale ? '#8a9399' : GAUGE_LEVELS[g.level].color
+                return (
+                  <li key={g.id}>
+                    <Link to={`/gauges/${g.id}`} className="flex items-center justify-between gap-2 rounded-lg bg-surface px-2.5 py-1.5 text-sm hover:brightness-[.98]">
+                      <span className="min-w-0 truncate">{g.name} <span className="text-xs text-muted">· {g.basin}</span></span>
+                      <span className="flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-semibold" style={{ background: c, color: inkOn(c) }}>{fmt(g.latest!.level, 2)} {g.unit}<GaugeTrend g={g} className="size-3" /></span>
                     </Link>
                   </li>
                 )
@@ -206,7 +229,7 @@ function Ctl({ onClick, icon, label, pressed }: { onClick: () => void; icon: Rea
   )
 }
 
-function Kpi({ label, value, sub, tone, color, to }: { label: string; value?: ReactNode; sub?: ReactNode; tone?: 'ok' | 'watch' | 'warn'; color?: string; to?: string }) {
+function Kpi({ label, value, sub, tone, color, to, className = '' }: { label: string; value?: ReactNode; sub?: ReactNode; tone?: 'ok' | 'watch' | 'warn'; color?: string; to?: string; className?: string }) {
   const toneCls = tone === 'warn' ? 'border-rambutan bg-rambutan-soft' : tone === 'watch' ? 'border-thambili bg-thambili-soft' : 'border-line bg-surface'
   const body = (
     <div className={`h-full rounded-xl border p-3 ${toneCls}`}>
@@ -220,7 +243,7 @@ function Kpi({ label, value, sub, tone, color, to }: { label: string; value?: Re
       {sub && <div className="truncate text-xs text-muted">{sub}</div>}
     </div>
   )
-  return to ? <Link to={to} className="block hover:brightness-[.98]">{body}</Link> : body
+  return to ? <Link to={to} className={`block hover:brightness-[.98] ${className}`}>{body}</Link> : <div className={className}>{body}</div>
 }
 
 function FeedItem({ e, fresh, locale }: { e: LoggedAlert; fresh: boolean; locale: string }) {

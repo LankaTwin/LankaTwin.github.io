@@ -6,6 +6,8 @@ import Scene from '../components/Scene'
 import { Freshness, SourceProblem, Skeleton } from '../components/ui'
 import { useTitle } from '../hooks/useApp'
 import { useNowcast, useRivers } from '../hooks/useLiveData'
+import { useGauges } from '../hooks/useGauges'
+import GaugeStrip from '../components/GaugeStrip'
 import { FLOOD_LEVELS, FLOOD_RAIN_CAP, FLOOD_RIVER_KM, FLOOD_WEIGHTS, nearestRiver } from '../lib/flood'
 import { fmt, inkOn, RIVER_LEVELS, riverLevelText } from '../lib/metrics'
 import { placeName, riverNames } from '../lib/places'
@@ -26,6 +28,7 @@ export default function FloodsPage() {
   const nav = useNavigate()
   const { readings, weather, updatedAt } = useNowcast()
   const { rivers } = useRivers()
+  const { gauges, query: gaugeQ } = useGauges()
   const s = useSettings()
 
   const ranked = useMemo(() => [...(readings ?? [])].sort((a, b) => (b.flood?.score ?? 0) - (a.flood?.score ?? 0)), [readings])
@@ -54,6 +57,12 @@ export default function FloodsPage() {
       </section>
 
       {weather.error && <SourceProblem error={weather.error} onRetry={() => weather.refetch()} />}
+
+      <section>
+        <h2 className="text-xl font-bold">{t('floods.gaugesTitle')}</h2>
+        <p className="mb-3 text-sm text-muted">{t('floods.gaugesIntro')}</p>
+        {gaugeQ.error ? <SourceProblem error={gaugeQ.error} onRetry={() => gaugeQ.refetch()} /> : !gauges ? <Skeleton className="h-28" /> : <GaugeStrip gauges={gauges} limit={8} />}
+      </section>
 
       <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
         <section>

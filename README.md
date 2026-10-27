@@ -12,6 +12,7 @@ straight from the publishers into an interactive map and charts, with no server 
 ## What it does
 
 - **Live map** of all 25 district capitals plus Negombo: temperature, feels-like, rain in the last and next 24 h, humidity, gusts, US AQI and PM2.5, colour-coded on the map.
+- **Official river gauges** (`#/gauges`): live hourly water levels and rainfall from the Irrigation Department's hydrometric stations (the data behind its [Realtime Water Level in Major River](https://www.arcgis.com/apps/dashboards/2cffe83c9ff5497d97375498bdf3ff38) dashboard): station and alert/minor/major flood counts, basin → station picker, current level with trend, 3-day level chart against the gauge's flood levels, daily rainfall, hourly-update and flood-level lists for the last 4 days, last-hour and 24-hour rainfall rankings, CSV export. Gauges also appear on the main map, raise signals, and feed the live and floods pages; river basins, rivers and mapped flood areas can be shown as map layers.
 - **Rivers**: modelled discharge at 14 points on the Kelani, Kalu, Gin, Nilwala, Walawe, Mahaweli, Deduru, Malwathu and other rivers, with a rise indicator comparing the 10-day forecast peak with the past 30 days.
 - **Satellite overlays** from NASA GIBS: MODIS true colour (any date), 8-day NDVI, IMERG rain rate, land surface temperature.
 - **Place pages**: 24 h / 7 d / 30 d charts for temperature, rain, humidity, wind, air quality and soil moisture; a 7-day forecast; this month's rain against the past decade (ERA5); and solar energy received (NASA POWER).

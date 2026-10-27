@@ -75,10 +75,11 @@ export const SOURCES: DataSource[] = [
     note: 'No public CORS-enabled API. Planned through the scheduled snapshot workflow described in docs/DATA_CONNECTORS.md.',
   },
   {
-    id: 'irrigation', name: 'River water levels', provider: 'Irrigation Department, Sri Lanka', status: 'planned',
-    provides: 'Gauge water levels and flood alert thresholds', refresh: '—', resolution: 'Gauge network',
-    license: 'Check with publisher', url: 'https://www.irrigation.gov.lk',
-    note: 'Requires a scheduled snapshot or a proxy; the browser cannot call it directly.',
+    id: 'irrigation', name: 'River water levels', provider: 'Irrigation Department, Sri Lanka (ArcGIS Online)', status: 'live',
+    provides: 'Hourly water level and rainfall at hydrometric stations, with each gauge’s alert, minor flood and major flood levels; river basins, rivers and mapped flood extents',
+    refresh: 'Hourly', resolution: 'Gauge network',
+    license: 'Check with publisher', url: 'https://www.arcgis.com/apps/dashboards/2cffe83c9ff5497d97375498bdf3ff38',
+    note: 'Read live from the public feature services behind the department’s “Realtime Water Level in Major River” dashboard. Readings are entered semi-automatically and can arrive late.',
   },
   {
     id: 'datagov', name: 'Open data portal', provider: 'data.gov.lk (CKAN)', status: 'planned',

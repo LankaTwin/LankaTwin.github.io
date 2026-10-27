@@ -14,6 +14,7 @@ const NAV: { to: string; label: Key; end?: boolean }[] = [
   { to: '/live', label: 'nav.live' },
   { to: '/stations', label: 'nav.places' },
   { to: '/floods', label: 'nav.floods' },
+  { to: '/gauges', label: 'nav.gauges' },
   { to: '/rivers', label: 'nav.rivers' },
   { to: '/air', label: 'nav.air' },
   { to: '/compare', label: 'nav.compare' },

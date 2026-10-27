@@ -16,6 +16,9 @@ interface Settings {
   showRivers: boolean
   showStations: boolean
   showFlood: boolean
+  showGauges: boolean
+  showBasins: boolean
+  showFloodAreas: boolean
   refreshMinutes: number
   compare: string[]
   favorites: string[]
@@ -30,6 +33,9 @@ interface Settings {
   toggleRivers: () => void
   toggleStations: () => void
   setShowFlood: (on: boolean) => void
+  setShowGauges: (on: boolean) => void
+  setShowBasins: (on: boolean) => void
+  setShowFloodAreas: (on: boolean) => void
   setRefresh: (n: number) => void
   setCompare: (ids: string[]) => void
   toggleFavorite: (id: string) => void
@@ -57,6 +63,9 @@ export const useSettings = create<Settings>()(
       showRivers: true,
       showStations: true,
       showFlood: false,
+      showGauges: true,
+      showBasins: false,
+      showFloodAreas: false,
       refreshMinutes: 10,
       compare: ['colombo', 'kandy', 'jaffna'],
       favorites: [],
@@ -75,6 +84,9 @@ export const useSettings = create<Settings>()(
       toggleRivers: () => set((s) => ({ showRivers: !s.showRivers })),
       toggleStations: () => set((s) => ({ showStations: !s.showStations })),
       setShowFlood: (showFlood) => set({ showFlood }),
+      setShowGauges: (showGauges) => set({ showGauges }),
+      setShowBasins: (showBasins) => set({ showBasins }),
+      setShowFloodAreas: (showFloodAreas) => set({ showFloodAreas }),
       setRefresh: (refreshMinutes) => set({ refreshMinutes }),
       setCompare: (compare) => set({ compare }),
       toggleFavorite: (id) => set((s) => ({ favorites: s.favorites.includes(id) ? s.favorites.filter((x) => x !== id) : [...s.favorites, id] })),
@@ -84,8 +96,8 @@ export const useSettings = create<Settings>()(
     {
       name: 'lt-settings',
       version: 1,
-      partialize: ({ lang, metric, overlay, overlayOpacity, showRivers, showStations, showFlood, refreshMinutes, compare, favorites, notify, alertSound }) =>
-        ({ lang, metric, overlay, overlayOpacity, showRivers, showStations, showFlood, refreshMinutes, compare, favorites, notify, alertSound }),
+      partialize: ({ lang, metric, overlay, overlayOpacity, showRivers, showStations, showFlood, showGauges, showBasins, showFloodAreas, refreshMinutes, compare, favorites, notify, alertSound }) =>
+        ({ lang, metric, overlay, overlayOpacity, showRivers, showStations, showFlood, showGauges, showBasins, showFloodAreas, refreshMinutes, compare, favorites, notify, alertSound }),
     },
   ),
 )

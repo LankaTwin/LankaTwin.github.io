@@ -41,6 +41,12 @@ export default defineConfig({
             options: { cacheName: 'lt-api', networkTimeoutSeconds: 8, expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 3 } },
           },
           {
+            // Irrigation Department gauges on ArcGIS Online: live first, last readings offline.
+            urlPattern: /^https:\/\/services\d*\.arcgis\.com\/.*/,
+            handler: 'NetworkFirst',
+            options: { cacheName: 'lt-gauges', networkTimeoutSeconds: 10, expiration: { maxEntries: 80, maxAgeSeconds: 60 * 60 * 24 * 2 } },
+          },
+          {
             urlPattern: /^https:\/\/(basemaps\.cartocdn\.com|[a-d]\.basemaps\.cartocdn\.com|tiles\.basemaps\.cartocdn\.com)\/.*/,
             handler: 'CacheFirst',
             options: { cacheName: 'lt-basemap', expiration: { maxEntries: 1500, maxAgeSeconds: 60 * 60 * 24 * 30 } },

@@ -4,6 +4,7 @@ import EmergencyContacts from '../components/EmergencyContacts'
 import AlertList from '../components/AlertList'
 import { Freshness, Skeleton } from '../components/ui'
 import { useNowcast, useRivers } from '../hooks/useLiveData'
+import { useGauges } from '../hooks/useGauges'
 import { buildAlerts, RULES } from '../lib/alerts'
 import { notificationsSupported, useTitle } from '../hooks/useApp'
 import { useSettings } from '../stores/settings'
@@ -14,8 +15,9 @@ import { useT } from '../i18n/useT'
 export default function AlertsPage() {
   const { readings, updatedAt, weather } = useNowcast()
   const { rivers } = useRivers()
+  const { gauges } = useGauges()
   const { t, lang } = useT()
-  const alerts = useMemo(() => buildAlerts(readings, rivers, lang), [readings, rivers, lang])
+  const alerts = useMemo(() => buildAlerts(readings, rivers, lang, gauges), [readings, rivers, lang, gauges])
   useTitle(t('signals.title'))
   return (
     <div className="mx-auto max-w-3xl px-4 py-6">
@@ -46,6 +48,7 @@ export default function AlertsPage() {
             <tr><td>{t('thresholds.wind')}</td><td>{t('thresholds.gustWatch', { n: RULES.gust.watch })}</td><td>{t('thresholds.gustWarn', { n: RULES.gust.warning })}</td><td className="text-muted">{t('thresholds.windBasis')}</td></tr>
             <tr><td>{t('thresholds.air')}</td><td>{t('thresholds.aqiWatch', { n: RULES.aqi.watch })}</td><td>{RULES.aqi.warning}</td><td className="text-muted">{t('thresholds.airBasis')}</td></tr>
             <tr><td>{t('thresholds.rivers')}</td><td>{t('thresholds.riverWatch', { n: 1.8 })}</td><td>{t('thresholds.riverWarn', { n: 3 })}</td><td className="text-muted">{t('thresholds.riverBasis')}</td></tr>
+            <tr><td>{t('thresholds.gauges')}</td><td>{t('gaugeLevel.alert')}</td><td>{t('gaugeLevel.minor')} / {t('gaugeLevel.major')}</td><td className="text-muted">{t('thresholds.gaugesBasis')}</td></tr>
           </tbody>
         </table>
       </div>
