@@ -96,3 +96,11 @@ export function calendarNames(locale: string) {
     dayOfWeekAbbr: days.map((d) => dtf(loc, { weekday: 'short' }).format(d)),
   }
 }
+
+/** A reading time in Sri Lanka time, e.g. "27 Oct 14:00". */
+export function readingTime(ms: number, locale: string) {
+  const d = new Date(ms)
+  const day = d.toLocaleDateString('en-CA', { timeZone: 'Asia/Colombo' })
+  const hm = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Colombo' })
+  return `${dayMonth(day, locale)} ${hm}`
+}

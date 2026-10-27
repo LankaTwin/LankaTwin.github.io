@@ -13,7 +13,10 @@ import { useT } from '../i18n/useT'
 import { placeName, riverNames } from '../lib/places'
 import { metricText, riverLevelText } from '../lib/metrics'
 import { FLOOD_LEVELS } from '../lib/flood'
+import type { Key } from '../i18n/core'
 import type { Feature, FeatureCollection } from 'geojson'
+import { GAUGE_LEVELS, type GaugeStation } from '../lib/gauges'
+import { useGaugeGeo } from '../hooks/useGauges'
 
 const STYLES = {
   light: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
@@ -48,7 +51,11 @@ interface Props {
   readings?: StationReading[]
   rivers?: RiverReading[]
   selected?: string
-  onSelect: (id: string, kind: 'station' | 'river') => void
+  onSelect: (id: string, kind: 'station' | 'river' | 'gauge') => void
+  /** Irrigation Department gauges. */
+  gauges?: GaugeStation[]
+  /** Force layers on regardless of the saved map settings (the gauges screen always shows them). */
+  force?: { gauges?: boolean; basins?: boolean; rivers?: boolean }
   /** Fly here when it changes. */
   focus?: { lon: number; lat: number; zoom?: number }
   /** Show a "you are here" dot. */
@@ -60,11 +67,12 @@ interface Props {
   className?: string
 }
 
-export default function MapView({ readings, rivers, selected, onSelect, focus, userLocation, onPick, picked, className }: Props) {
+export default function MapView({ readings, rivers, gauges, force, selected, onSelect, focus, userLocation, onPick, picked, className }: Props) {
   const box = useRef<HTMLDivElement>(null)
   const map = useRef<MLMap | null>(null)
   const stationMarkers = useRef(new Map<string, Marker>())
   const riverMarkers = useRef(new Map<string, Marker>())
+  const gaugeMarkers = useRef(new Map<string, Marker>())
   const userMarker = useRef<Marker | null>(null)
   const onSelectRef = useRef(onSelect)
   onSelectRef.current = onSelect
@@ -72,8 +80,14 @@ export default function MapView({ readings, rivers, selected, onSelect, focus, u
   onPickRef.current = onPick
   const pickMarker = useRef<Marker | null>(null)
 
-  const { theme, metric, overlay, overlayOpacity, overlayDate, showRivers, showStations, showFlood } = useSettings()
+  const { theme, metric, overlay, overlayOpacity, overlayDate, showRivers, showStations, showFlood, showGauges: savedGauges, showBasins: savedBasins, showFloodAreas } = useSettings()
+  const showGauges = force?.gauges ?? savedGauges
+  const showBasins = force?.basins ?? savedBasins
+  const showRiverLines = force?.rivers ?? savedBasins
   const { t, lang } = useT()
+  const basinsGeo = useGaugeGeo('basins', showBasins)
+  const riversGeo = useGaugeGeo('rivers', showRiverLines)
+  const floodGeo = useGaugeGeo('flood', showFloodAreas)
 
   // Create the map once.
   useEffect(() => {
@@ -111,6 +125,7 @@ export default function MapView({ readings, rivers, selected, onSelect, focus, u
       map.current = null
       stationMarkers.current.clear()
       riverMarkers.current.clear()
+      gaugeMarkers.current.clear()
       userMarker.current = null
       pickMarker.current = null
     }
@@ -222,6 +237,73 @@ export default function MapView({ readings, rivers, selected, onSelect, focus, u
     m.on('style.load', apply)
     return () => { m.off('style.load', apply) }
   }, [readings, rivers, showFlood, theme])
+
+  // Irrigation Department vectors: mapped flood extents, basin outlines and river lines, under the chips.
+  useEffect(() => {
+    const m = map.current
+    if (!m) return
+    const empty: FeatureCollection = { type: 'FeatureCollection', features: [] }
+    const layers: [string, FeatureCollection | undefined, boolean][] = [
+      ['lt-floodareas', floodGeo.data, showFloodAreas],
+      ['lt-basins', basinsGeo.data, showBasins],
+      ['lt-riverlines', riversGeo.data, showRiverLines],
+    ]
+    const apply = () => {
+      const firstSymbol = m.getStyle().layers?.find((l) => l.type === 'symbol')?.id
+      for (const [id, fc, on] of layers) {
+        const data = on && fc ? fc : empty
+        const src = m.getSource(id) as maplibregl.GeoJSONSource | undefined
+        if (src) { src.setData(data); continue }
+        m.addSource(id, { type: 'geojson', data, attribution: 'Irrigation Department, Sri Lanka' })
+        if (id === 'lt-floodareas') {
+          m.addLayer({ id, type: 'fill', source: id, paint: { 'fill-color': '#1f78d1', 'fill-opacity': 0.45, 'fill-outline-color': '#0b4f94' } }, firstSymbol)
+        } else if (id === 'lt-basins') {
+          m.addLayer({ id: `${id}-fill`, type: 'fill', source: id, paint: { 'fill-color': '#0e7c86', 'fill-opacity': 0.04 } }, firstSymbol)
+          m.addLayer({ id, type: 'line', source: id, paint: { 'line-color': '#0e7c86', 'line-width': 1, 'line-opacity': 0.7 } }, firstSymbol)
+        } else {
+          m.addLayer({ id, type: 'line', source: id, paint: { 'line-color': '#2f7fe0', 'line-width': ['interpolate', ['linear'], ['zoom'], 6, 0.6, 11, 2], 'line-opacity': 0.8 } }, firstSymbol)
+        }
+      }
+    }
+    if (m.isStyleLoaded()) apply()
+    m.on('style.load', apply)
+    return () => { m.off('style.load', apply) }
+  }, [floodGeo.data, basinsGeo.data, riversGeo.data, showFloodAreas, showBasins, showRiverLines, theme])
+
+  // Gauge markers: a dot in the department's status colour; the selected one shows its level.
+  useEffect(() => {
+    const m = map.current
+    if (!m) return
+    const seen = new Set<string>()
+    if (showGauges) {
+      for (const g of gauges ?? []) {
+        if (g.lat == null || g.lon == null) continue
+        const id = g.id
+        seen.add(id)
+        let mk = gaugeMarkers.current.get(id)
+        if (!mk) {
+          const el = document.createElement('button')
+          el.type = 'button'
+          el.className = 'lt-chip gauge'
+          el.addEventListener('click', (e) => { e.stopPropagation(); onSelectRef.current(id, 'gauge') })
+          mk = new maplibregl.Marker({ element: el }).setLngLat([g.lon, g.lat]).addTo(m)
+          gaugeMarkers.current.set(id, mk)
+        }
+        const el = mk.getElement()
+        const bg = g.stale ? '#8a9399' : GAUGE_LEVELS[g.level].color
+        el.style.background = bg
+        el.style.color = inkOn(bg)
+        el.dataset.active = String(selected === id)
+        el.dataset.level = g.level
+        const v = g.latest?.level
+        el.innerHTML = selected === id && v != null ? `${fmt(v, 2)}<small>${g.unit}</small>` : ''
+        const label = `${t('gauge.marker', { name: g.name })}: ${v != null ? `${fmt(v, 2)} ${g.unit}, ` : ''}${t(g.stale ? 'gauge.stale' : (`gaugeLevel.${g.level}` as Key))}`
+        el.setAttribute('aria-label', label)
+        el.title = label
+      }
+    }
+    for (const [id, mk] of gaugeMarkers.current) if (!seen.has(id)) { mk.remove(); gaugeMarkers.current.delete(id) }
+  }, [gauges, selected, showGauges, lang]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Station value chips.
   useEffect(() => {

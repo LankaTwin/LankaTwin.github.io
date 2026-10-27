@@ -4,6 +4,7 @@ import { tFor } from '../i18n/core'
 import { STATIONS } from '../lib/places'
 import { useSettings } from '../stores/settings'
 import { useNowcast, useRivers } from './useLiveData'
+import { useGauges } from './useGauges'
 import { useAlertLog } from '../stores/alertLog'
 
 /** Pass an already-translated title; with none, the app's own name in the interface language. */
@@ -55,7 +56,8 @@ export function useSignalNotifications() {
   const { notify, favorites, lang } = useSettings()
   const { readings } = useNowcast()
   const { rivers } = useRivers()
-  const alerts = useMemo(() => buildAlerts(readings, rivers, lang), [readings, rivers, lang])
+  const { gauges } = useGauges()
+  const alerts = useMemo(() => buildAlerts(readings, rivers, lang, gauges), [readings, rivers, lang, gauges])
 
   useEffect(() => {
     if (!notify || !notificationsSupported() || Notification.permission !== 'granted' || !readings) return
@@ -103,8 +105,9 @@ export function useAlertTracker() {
   const { lang, alertSound } = useSettings()
   const { readings } = useNowcast()
   const { rivers } = useRivers()
+  const { gauges } = useGauges()
   const update = useAlertLog((s) => s.update)
-  const alerts = useMemo(() => buildAlerts(readings, rivers, lang), [readings, rivers, lang])
+  const alerts = useMemo(() => buildAlerts(readings, rivers, lang, gauges), [readings, rivers, lang, gauges])
   useEffect(() => {
     if (!readings) return
     const { added, escalated } = update(alerts)

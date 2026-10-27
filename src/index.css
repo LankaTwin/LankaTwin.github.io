@@ -122,3 +122,11 @@ body {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
+
+/* Irrigation Department gauge: a small dot that grows into a value chip when selected. */
+.lt-chip.gauge { min-width: 14px; min-height: 14px; padding: 0; border-radius: 999px; justify-content: center; align-items: center; }
+.lt-chip.gauge[data-active="true"] { padding: 3px 7px; }
+.lt-chip.gauge[data-level="minor"], .lt-chip.gauge[data-level="major"] { min-width: 18px; min-height: 18px; }
+.lt-chip.gauge[data-level="major"]:not([data-active="true"]) { animation: lt-gauge 1.6s ease-out infinite; }
+@keyframes lt-gauge { 0% { box-shadow: 0 0 0 2px var(--c-surface), 0 0 0 2px rgba(215,38,61,.6); } 100% { box-shadow: 0 0 0 2px var(--c-surface), 0 0 0 12px rgba(215,38,61,0); } }
+@media (prefers-reduced-motion: reduce) { .lt-chip.gauge[data-level="major"]:not([data-active="true"]) { animation: none; } }

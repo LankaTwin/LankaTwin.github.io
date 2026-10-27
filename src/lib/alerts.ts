@@ -2,6 +2,7 @@ import type { RiverReading, StationReading } from '../hooks/useLiveData'
 import { fmt, riverLevelText } from './metrics'
 import { placeName, riverNames } from './places'
 import { tFor, type Key, type Lang, type T } from '../i18n/core'
+import type { GaugeStation } from './gauges'
 
 export type AlertLevel = 'watch' | 'warning'
 export type AlertKind = 'rain' | 'flood' | 'storm' | 'heat' | 'wind' | 'air' | 'river'
@@ -30,7 +31,7 @@ export const RULES = {
 }
 
 /** Alert text comes out in the interface language; tests and callers without one get English. */
-export function buildAlerts(readings?: StationReading[], rivers?: RiverReading[], lang: Lang = 'en'): Alert[] {
+export function buildAlerts(readings?: StationReading[], rivers?: RiverReading[], lang: Lang = 'en', gauges?: GaugeStation[]): Alert[] {
   const t: T = tFor(lang)
   const out: Alert[] = []
   for (const r of readings ?? []) {
@@ -107,6 +108,16 @@ export function buildAlerts(readings?: StationReading[], rivers?: RiverReading[]
       level: rv.level === 'elevated' ? 'watch' : 'warning',
       title: t('alert.river.title', { level: riverLevelText(rv.level, t) }),
       detail: t('alert.river.detail', { peak: fmt(rv.peak), ratio: fmt(rv.ratio, 1) }),
+    })
+  }
+  // Official gauge readings from the Irrigation Department: alert level is a watch, flood levels are warnings.
+  for (const g of gauges ?? []) {
+    if (g.stale || g.level === 'normal' || g.latest?.level == null) continue
+    out.push({
+      id: `gauge-${g.id}`, kind: 'river', place: g.name, href: `/gauges/${g.id}`,
+      level: g.level === 'alert' ? 'watch' : 'warning',
+      title: t(`alert.gauge.${g.level}` as Key),
+      detail: t('alert.gauge.detail', { level: fmt(g.latest.level, 2), unit: g.unit, basin: g.basin }),
     })
   }
   return out.sort((a, b) => (a.level === b.level ? a.kind.localeCompare(b.kind) : a.level === 'warning' ? -1 : 1))

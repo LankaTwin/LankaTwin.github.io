@@ -20,6 +20,7 @@ const PAGES: [Key, string, string][] = [
   ['nav.places', '/stations', 'all towns table districts'],
   ['nav.live', '/live', 'live dashboard real-time realtime kiosk wall screen alerts feed'],
   ['nav.floods', '/floods', 'flood risk water map support evacuation safety help 117 elevation'],
+  ['nav.gauges', '/gauges', 'river gauges water level irrigation department hydrometric station alert minor major flood level rainfall basin arcgis'],
   ['nav.rivers', '/rivers', 'discharge flood glofas'],
   ['nav.air', '/air', 'air quality aqi pm2.5 pollution smog dust ozone'],
   ['nav.compare', '/compare', 'chart side by side'],
