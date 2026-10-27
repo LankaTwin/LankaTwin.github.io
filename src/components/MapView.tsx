@@ -77,8 +77,13 @@ export default function MapView({ readings, rivers, gauges, force, selected, onS
   const onSelectRef = useRef(onSelect)
   onSelectRef.current = onSelect
   const onPickRef = useRef(onPick)
+  const focusRef = useRef(focus)
+  focusRef.current = focus
   onPickRef.current = onPick
   const pickMarker = useRef<Marker | null>(null)
+  // True once the style is parsed and layers can be added. Not map.isStyleLoaded(): that stays
+  // false while any tile is still loading, which would silently drop layer updates.
+  const styleReady = useRef(false)
 
   const { theme, metric, overlay, overlayOpacity, overlayDate, showRivers, showStations, showFlood, showGauges: savedGauges, showBasins: savedBasins, showFloodAreas } = useSettings()
   const showGauges = force?.gauges ?? savedGauges
@@ -117,13 +122,27 @@ export default function MapView({ readings, rivers, gauges, force, selected, onS
     m.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'top-right')
     // Chips stop their own clicks, so a map click is always a tap on open ground.
     m.on('click', (e) => onPickRef.current?.(e.lngLat.lat, e.lngLat.lng))
+    m.on('style.load', () => { styleReady.current = true })
+    // MapLibre opens the compact credits expanded; on phones that box covers the variable
+    // picker, so start it folded behind its (i) button there.
+    m.once('load', () => {
+      if (box.current && box.current.clientWidth < 640) box.current.querySelector('.maplibregl-ctrl-attrib')?.classList.remove('maplibregl-compact-show')
+    })
     map.current = m
-    const ro = new ResizeObserver(() => m.resize())
+    // Until someone pans or zooms, keep the whole island in view as the panel changes size
+    // (the gauges page grows its map once data arrives).
+    let moved = false
+    m.on('movestart', (e) => { if ((e as { originalEvent?: Event }).originalEvent) moved = true })
+    const ro = new ResizeObserver(() => {
+      m.resize()
+      if (!moved && !focusRef.current) m.fitBounds(SL_BOUNDS, { padding: 24, animate: false })
+    })
     ro.observe(box.current)
     return () => {
       ro.disconnect()
       m.remove()
       map.current = null
+      styleReady.current = false
       stationMarkers.current.clear()
       riverMarkers.current.clear()
       gaugeMarkers.current.clear()
@@ -138,7 +157,7 @@ export default function MapView({ readings, rivers, gauges, force, selected, onS
     if (!m) return
     const wanted = STYLES[theme]
     const current = (m as unknown as { _lt_style?: string })._lt_style
-    if (current && current !== wanted) m.setStyle(wanted)
+    if (current && current !== wanted) { styleReady.current = false; m.setStyle(wanted) }
     ;(m as unknown as { _lt_style?: string })._lt_style = wanted
   }, [theme])
 
@@ -162,7 +181,7 @@ export default function MapView({ readings, rivers, gauges, force, selected, onS
       const firstSymbol = m.getStyle().layers?.find((l) => l.type === 'symbol')?.id
       m.addLayer({ id: 'lt-overlay', type: 'raster', source: 'lt-overlay', paint: { 'raster-opacity': overlayOpacity, 'raster-fade-duration': 200 } }, firstSymbol)
     }
-    if (m.isStyleLoaded()) apply()
+    if (styleReady.current) apply()
     m.on('style.load', apply)
     return () => { m.off('style.load', apply) }
   }, [overlay, overlayDate, theme]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -234,7 +253,7 @@ export default function MapView({ readings, rivers, gauges, force, selected, onS
         },
       }, firstSymbol)
     }
-    if (m.isStyleLoaded()) apply()
+    if (styleReady.current) apply()
     m.on('style.load', apply)
     return () => { m.off('style.load', apply) }
   }, [readings, rivers, showFlood, theme])
@@ -266,7 +285,7 @@ export default function MapView({ readings, rivers, gauges, force, selected, onS
         }
       }
     }
-    if (m.isStyleLoaded()) apply()
+    if (styleReady.current) apply()
     m.on('style.load', apply)
     return () => { m.off('style.load', apply) }
   }, [floodGeo.data, basinsGeo.data, riversGeo.data, showFloodAreas, showBasins, showRiverLines, theme])
@@ -322,7 +341,8 @@ export default function MapView({ readings, rivers, gauges, force, selected, onS
           el.type = 'button'
           el.className = 'lt-chip'
           el.addEventListener('click', (e) => { e.stopPropagation(); onSelectRef.current(id, 'station') })
-          mk = new maplibregl.Marker({ element: el }).setLngLat([r.station.lon, r.station.lat]).addTo(m)
+          // Sits just above the town so the basemap's own name label stays readable below it.
+          mk = new maplibregl.Marker({ element: el, anchor: 'bottom', offset: [0, -5] }).setLngLat([r.station.lon, r.station.lat]).addTo(m)
           stationMarkers.current.set(id, mk)
         }
         const el = mk.getElement()
