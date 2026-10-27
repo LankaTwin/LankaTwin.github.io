@@ -1,0 +1,95 @@
+import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { ArrowDownWideNarrow } from 'lucide-react'
+import { Freshness, SourceProblem, Skeleton } from '../components/ui'
+import { useNowcast } from '../hooks/useLiveData'
+import { colorFor, fmt, inkOn, METRIC_ORDER, METRICS, weatherText, type MetricId } from '../lib/metrics'
+import { downloadCSV } from '../lib/export'
+import { colomboToday } from '../lib/time'
+
+const PROVINCES = ['All', 'Western', 'Central', 'Southern', 'Northern', 'Eastern', 'North Western', 'North Central', 'Uva', 'Sabaragamuwa']
+
+export default function StationsPage() {
+  const { readings, weather, updatedAt } = useNowcast()
+  const [sort, setSort] = useState<MetricId | 'name'>('name')
+  const [prov, setProv] = useState('All')
+  const rows = useMemo(() => {
+    const list = (readings ?? []).filter((r) => prov === 'All' || r.station.province === prov)
+    return sort === 'name'
+      ? [...list].sort((a, b) => a.station.name.localeCompare(b.station.name))
+      : [...list].sort((a, b) => (b.values[sort] ?? -999) - (a.values[sort] ?? -999))
+  }, [readings, sort, prov])
+
+  return (
+    <div className="mx-auto max-w-6xl px-4 py-6">
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-extrabold tracking-tight">Places</h1>
+          <p className="text-muted">Current conditions at all 25 district capitals and Negombo. Select a column heading to rank them.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="text-sm text-muted" htmlFor="prov">Province</label>
+          <select id="prov" value={prov} onChange={(e) => setProv(e.target.value)} className="rounded-lg border border-line bg-surface px-2 py-1.5 text-sm">
+            {PROVINCES.map((p) => <option key={p}>{p}</option>)}
+          </select>
+          <button
+            disabled={!readings}
+            onClick={() => downloadCSV(`lankatwin-places-${colomboToday()}.csv`,
+              ['place', 'district', 'province', 'time_asia_colombo', ...METRIC_ORDER, 'weather'],
+              (readings ?? []).map((r) => [r.station.name, r.station.district, r.station.province, r.time, ...METRIC_ORDER.map((m) => r.values[m]), weatherText(r.weatherCode)]))}
+            className="rounded-lg border border-line bg-surface px-3 py-1.5 text-sm font-medium hover:bg-sunken disabled:opacity-50"
+          >
+            CSV
+          </button>
+        </div>
+      </div>
+      {weather.error && <div className="mb-3"><SourceProblem error={weather.error} onRetry={() => weather.refetch()} /></div>}
+      {!readings ? <Skeleton className="h-96" /> : (
+        <div className="overflow-x-auto rounded-xl border border-line bg-surface">
+          <table className="w-full min-w-[820px] text-sm">
+            <thead>
+              <tr className="border-b border-line text-left text-muted">
+                <th className="p-3 font-medium">
+                  <button onClick={() => setSort('name')} className={`hover:text-ink ${sort === 'name' ? 'text-ink' : ''}`}>Place</button>
+                </th>
+                <th className="p-3 font-medium">Sky</th>
+                {METRIC_ORDER.map((m) => (
+                  <th key={m} className="p-3 text-right font-medium" aria-sort={sort === m ? 'descending' : undefined}>
+                    <button onClick={() => setSort(m)} title={METRICS[m].help} className={`inline-flex items-center gap-1 hover:text-ink ${sort === m ? 'text-ink' : ''}`}>
+                      {sort === m && <ArrowDownWideNarrow className="size-3.5" aria-hidden />}{METRICS[m].short}
+                    </button>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.station.id} className="border-b border-line last:border-0 hover:bg-sunken/60">
+                  <td className="p-3">
+                    <Link to={`/station/${r.station.id}`} className="font-semibold hover:text-lagoon">{r.station.name}</Link>
+                    <div className="text-xs text-muted">{r.station.province}</div>
+                  </td>
+                  <td className="p-3 text-muted">{weatherText(r.weatherCode)}</td>
+                  {METRIC_ORDER.map((m) => {
+                    const v = r.values[m]
+                    const c = colorFor(METRICS[m], v)
+                    return (
+                      <td key={m} className="p-2 text-right">
+                        <span className="inline-block min-w-11 rounded-md px-1.5 py-0.5 text-center font-semibold" style={sort === m ? { background: c, color: inkOn(c) } : undefined}>
+                          {fmt(v, METRICS[m].decimals)}
+                        </span>
+                      </td>
+                    )
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <p className="mt-3 text-xs text-muted">
+        <Freshness at={updatedAt} fetching={weather.isFetching} />. Temperatures °C, rain mm, humidity %, gusts km/h, PM2.5 µg/m³.
+      </p>
+    </div>
+  )
+}
