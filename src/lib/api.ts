@@ -178,6 +178,43 @@ export function series(block: OMBlock | undefined, key: string): (number | null)
   return Array.isArray(v) ? (v as (number | null)[]) : []
 }
 
+// ---------- Open-Meteo elevation (Copernicus DEM GLO-90) ----------
+
+/** Ground elevation in metres for up to 100 points, from the 90 m Copernicus DEM. */
+export async function fetchElevation(points: { lat: number; lon: number }[], signal?: AbortSignal) {
+  const r = await fetchJson<{ elevation: number[] }>('Open-Meteo Elevation', `https://api.open-meteo.com/v1/elevation?${qs(coords(points))}`, signal)
+  return r.elevation
+}
+
+// ---------- Everything we know about one tapped spot ----------
+
+export interface SpotData {
+  elevation: number | null
+  weather: OMResponse | null
+  air: OMResponse | null
+  flood: OMResponse | null
+}
+
+/** Elevation, current weather, air quality and river discharge for any point. Parts that fail come back null. */
+export async function fetchSpot(lat: number, lon: number, signal?: AbortSignal): Promise<SpotData> {
+  const p = { latitude: lat.toFixed(4), longitude: lon.toFixed(4) }
+  const [elev, weather, air, flood] = await Promise.allSettled([
+    fetchElevation([{ lat, lon }], signal),
+    fetchJson<OMResponse>('Open-Meteo Forecast', `https://api.open-meteo.com/v1/forecast?${qs({
+      ...p, current: CURRENT_VARS.join(','), hourly: 'precipitation', past_days: 1, forecast_days: 2, timezone: TZ,
+    })}`, signal),
+    fetchJson<OMResponse>('Open-Meteo Air Quality', `https://air-quality-api.open-meteo.com/v1/air-quality?${qs({
+      ...p, current: 'us_aqi,pm2_5,pm10', timezone: TZ,
+    })}`, signal),
+    fetchJson<OMResponse>('Open-Meteo Flood (GloFAS)', `https://flood-api.open-meteo.com/v1/flood?${qs({
+      ...p, daily: 'river_discharge,river_discharge_max', past_days: 31, forecast_days: 10,
+    })}`, signal),
+  ])
+  if (weather.status === 'rejected' && elev.status === 'rejected') throw weather.reason
+  const ok = <T,>(r: PromiseSettledResult<T>) => (r.status === 'fulfilled' ? r.value : null)
+  return { elevation: ok(elev)?.[0] ?? null, weather: ok(weather), air: ok(air), flood: ok(flood) }
+}
+
 // ---------- Wikipedia / Wikimedia Commons (place photos) ----------
 
 export interface PlacePhoto {

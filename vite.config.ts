@@ -46,6 +46,12 @@ export default defineConfig({
             options: { cacheName: 'lt-basemap', expiration: { maxEntries: 1500, maxAgeSeconds: 60 * 60 * 24 * 30 } },
           },
           {
+            // Cloudinary URLs are versioned by their transformation; safe to keep a month.
+            urlPattern: /^https:\/\/res\.cloudinary\.com\/.*/,
+            handler: 'CacheFirst',
+            options: { cacheName: 'lt-cloudinary', expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 30 }, cacheableResponse: { statuses: [0, 200] } },
+          },
+          {
             // Place photos and their credits change rarely.
             urlPattern: /^https:\/\/(en\.wikipedia\.org\/(api\/rest_v1|w\/api\.php)|upload\.wikimedia\.org\/)/,
             handler: 'StaleWhileRevalidate',

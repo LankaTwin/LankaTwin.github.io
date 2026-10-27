@@ -4,7 +4,8 @@ import { fetchPlacePhoto } from '../lib/api'
 import { districtName, placeName, type Station } from '../lib/places'
 import type { Key } from '../i18n/core'
 import { useT } from '../i18n/useT'
-import Landscape, { type Sky } from './Landscape'
+import type { Sky } from './Landscape'
+import Scene from './Scene'
 
 /**
  * A photo of the place from its Wikipedia article, credited to its author. Falls
@@ -27,7 +28,8 @@ export default function PlacePhoto({ station, sky, className = '', children }: {
 
   return (
     <figure className={`relative overflow-hidden bg-sunken ${className}`}>
-      <Landscape zone={station.zone} sky={sky} className="absolute inset-0 h-full w-full" label={showPhoto ? undefined : t(`place.illustration.${station.zone}` as Key, { place: name })} />
+      {/* Cloudinary scene of the local landscape; the town photo, when there is one, covers it. */}
+      <Scene id={station.zone} sky={sky} shade={false} caption={!showPhoto || !loaded} className="absolute inset-0 h-full w-full" label={showPhoto && loaded ? undefined : t(`place.illustration.${station.zone}` as Key, { place: name })} />
       {showPhoto && (
         <img
           src={p.src}

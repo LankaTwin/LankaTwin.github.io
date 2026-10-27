@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware'
 import type { MetricId } from '../lib/metrics'
 import { detectLang, type Lang } from '../i18n/core'
 
-export type Overlay = 'none' | 'truecolor' | 'ndvi' | 'imerg' | 'lst'
+export type Overlay = 'none' | 'truecolor' | 'flood' | 'ndvi' | 'imerg' | 'lst'
 export type Theme = 'light' | 'dark'
 
 interface Settings {
@@ -15,6 +15,7 @@ interface Settings {
   overlayDate: string // YYYY-MM-DD for daily satellite imagery
   showRivers: boolean
   showStations: boolean
+  showFlood: boolean
   refreshMinutes: number
   compare: string[]
   favorites: string[]
@@ -27,6 +28,7 @@ interface Settings {
   setOverlayDate: (d: string) => void
   toggleRivers: () => void
   toggleStations: () => void
+  setShowFlood: (on: boolean) => void
   setRefresh: (n: number) => void
   setCompare: (ids: string[]) => void
   toggleFavorite: (id: string) => void
@@ -52,6 +54,7 @@ export const useSettings = create<Settings>()(
       overlayDate: yesterday(),
       showRivers: true,
       showStations: true,
+      showFlood: false,
       refreshMinutes: 10,
       compare: ['colombo', 'kandy', 'jaffna'],
       favorites: [],
@@ -68,6 +71,7 @@ export const useSettings = create<Settings>()(
       setOverlayDate: (overlayDate) => set({ overlayDate }),
       toggleRivers: () => set((s) => ({ showRivers: !s.showRivers })),
       toggleStations: () => set((s) => ({ showStations: !s.showStations })),
+      setShowFlood: (showFlood) => set({ showFlood }),
       setRefresh: (refreshMinutes) => set({ refreshMinutes }),
       setCompare: (compare) => set({ compare }),
       toggleFavorite: (id) => set((s) => ({ favorites: s.favorites.includes(id) ? s.favorites.filter((x) => x !== id) : [...s.favorites, id] })),
@@ -76,8 +80,8 @@ export const useSettings = create<Settings>()(
     {
       name: 'lt-settings',
       version: 1,
-      partialize: ({ lang, metric, overlay, overlayOpacity, showRivers, showStations, refreshMinutes, compare, favorites, notify }) =>
-        ({ lang, metric, overlay, overlayOpacity, showRivers, showStations, refreshMinutes, compare, favorites, notify }),
+      partialize: ({ lang, metric, overlay, overlayOpacity, showRivers, showStations, showFlood, refreshMinutes, compare, favorites, notify }) =>
+        ({ lang, metric, overlay, overlayOpacity, showRivers, showStations, showFlood, refreshMinutes, compare, favorites, notify }),
     },
   ),
 )

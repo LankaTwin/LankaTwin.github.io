@@ -8,6 +8,8 @@ import WeatherIcon from '../components/WeatherIcon'
 import IslandSnapshot from '../components/IslandSnapshot'
 import { useTitle } from '../hooks/useApp'
 import SeasonCard from '../components/SeasonCard'
+import SpotCard from '../components/SpotCard'
+import { FLOOD_LEVELS } from '../lib/flood'
 import { districtName, nearestStation, placeName, riverNames } from '../lib/places'
 import { addDays } from '../lib/time'
 import { rich, type Key } from '../i18n/core'
@@ -31,7 +33,11 @@ export default function Dashboard() {
   const [locNote, setLocNote] = useState<string>()
   useTitle()
 
+  // A tapped spot lives in the URL too (?p=lat,lon), so it can be shared.
+  const pp = params.get('p')?.split(',').map(Number)
+  const spot = pp && pp.length === 2 && pp.every(Number.isFinite) ? { lat: pp[0], lon: pp[1] } : undefined
   const select = (id: string, k: 'station' | 'river') => setParams({ s: id, k }, { replace: true })
+  const pick = (lat: number, lon: number) => setParams({ p: `${lat.toFixed(4)},${lon.toFixed(4)}` }, { replace: true })
   const clear = () => setParams({}, { replace: true })
 
   const locate = () => {
@@ -44,12 +50,14 @@ export default function Dashboard() {
         const here = { lat: pos.coords.latitude, lon: pos.coords.longitude }
         const { station, km } = nearestStation(here)
         const place = placeName(station, lang)
-        select(station.id, 'station')
         if (km > 100) {
           setLocNote(t('dash.locOutside', { place, km: Math.round(km) }))
+          select(station.id, 'station')
           setFocus({ lon: station.lon, lat: station.lat, zoom: 8 })
         } else {
           setMe(here)
+          // Your exact spot: its elevation and flood risk, with the nearest town one tap away.
+          pick(here.lat, here.lon)
           setLocNote(t('dash.locNearest', { place, km: Math.round(km) }))
           setFocus({ ...here, zoom: 9 })
         }
@@ -68,7 +76,7 @@ export default function Dashboard() {
   return (
     <div className="flex h-full flex-col overflow-y-auto lg:flex-row lg:overflow-hidden">
       <div className="relative h-[62vh] shrink-0 lg:h-auto lg:flex-1">
-        <MapView key={lang} readings={readings} rivers={rivers} selected={sel} onSelect={select} focus={focus} userLocation={me} className="absolute inset-0" />
+        <MapView key={lang} readings={readings} rivers={rivers} selected={sel} onSelect={select} onPick={pick} picked={spot} focus={focus} userLocation={me} className="absolute inset-0" />
         <MetricBar />
         <LayerMenu>
           <button
@@ -93,10 +101,12 @@ export default function Dashboard() {
           {air.error && !weather.error && <SourceProblem error={air.error} onRetry={() => air.refetch()} />}
           {riverQ.error && <SourceProblem error={riverQ.error} onRetry={() => riverQ.refetch()} />}
 
-          {selStation && <StationCard r={selStation} onClose={clear} />}
-          {selRiver && <RiverCard r={selRiver} onClose={clear} />}
-          {!selStation && !selRiver && <IslandNow readings={readings} rivers={rivers} />}
-          {!selStation && !selRiver && <Starred readings={readings} />}
+          {spot && <SpotCard key={`${spot.lat},${spot.lon}`} lat={spot.lat} lon={spot.lon} onClose={clear} />}
+          {!spot && selStation && <StationCard r={selStation} onClose={clear} />}
+          {!spot && selRiver && <RiverCard r={selRiver} onClose={clear} />}
+          {!spot && !selStation && !selRiver && <IslandNow readings={readings} rivers={rivers} />}
+          {!spot && !selStation && !selRiver && <p className="rounded-lg bg-lagoon-soft px-3 py-2 text-xs text-lagoon">{t('spot.hint')}</p>}
+          {!spot && !selStation && !selRiver && <Starred readings={readings} />}
 
           <section>
             <div className="mb-2 flex items-baseline justify-between">
@@ -211,6 +221,14 @@ function LayerMenu({ children }: { children?: React.ReactNode }) {
             <legend className="sr-only">{t('layers.markers')}</legend>
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={s.showStations} onChange={s.toggleStations} className="accent-[var(--c-lagoon)]" /> {t('layers.towns')}</label>
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={s.showRivers} onChange={s.toggleRivers} className="accent-[var(--c-lagoon)]" /> {t('layers.rivers')}</label>
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={s.showFlood} onChange={(e) => s.setShowFlood(e.target.checked)} className="accent-[var(--c-lagoon)]" /> {t('layers.flood')}</label>
+            {s.showFlood && (
+              <div className="flex flex-wrap gap-1 pl-6" aria-hidden>
+                {(Object.keys(FLOOD_LEVELS) as (keyof typeof FLOOD_LEVELS)[]).map((k) => (
+                  <span key={k} className="rounded-[3px] px-1.5 py-0.5 text-[11px] font-semibold" style={{ background: FLOOD_LEVELS[k].color, color: inkOn(FLOOD_LEVELS[k].color) }}>{t(`floodLevel.${k}` as Key)}</span>
+                ))}
+              </div>
+            )}
           </fieldset>
         </div>
       )}
@@ -290,6 +308,8 @@ function StationCard({ r, onClose }: { r: StationReading; onClose: () => void })
         <Stat label={t('stat.uvToday')} value={fmt(r.uvMax)} sub={uvBand(r.uvMax, t)} />
         <Stat label={t('stat.today')} value={`${fmt(r.tMax)}°`} sub={t('stat.low', { t: fmt(r.tMin) })} />
         <Stat label={t('stat.pressure')} value={fmt(r.pressure)} unit="hPa" />
+        <Stat label={t('stat.elevation')} value={fmt(r.elevation)} unit="m" />
+        {r.flood && <Stat label={t('stat.flood')} value={t(`floodLevel.${r.flood.level}` as Key)} sub={t('flood.score', { n: r.flood.score })} />}
       </div>
       <Link to={`/station/${r.station.id}`} className="mt-4 flex items-center justify-between rounded-lg bg-lagoon px-3 py-2 text-sm font-semibold text-canvas hover:brightness-110">
         {t('station.more')} <ChevronRight className="size-4" aria-hidden />
