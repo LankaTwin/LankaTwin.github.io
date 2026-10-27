@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { ShareButton } from '../components/Share'
 import { Bell, BellOff } from 'lucide-react'
 import EmergencyContacts from '../components/EmergencyContacts'
 import AlertList from '../components/AlertList'
@@ -21,7 +22,14 @@ export default function AlertsPage() {
   useTitle(t('signals.title'))
   return (
     <div className="mx-auto max-w-3xl px-4 py-6">
-      <h1 className="text-3xl font-extrabold tracking-tight">{t('signals.title')}</h1>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <h1 className="text-3xl font-extrabold tracking-tight">{t('signals.title')}</h1>
+        <ShareButton
+          title={t('share.alertsTitle')}
+          text={readings ? t('share.alertsText', { w: alerts.filter((a) => a.level === 'warning').length, v: alerts.filter((a) => a.level === 'watch').length }) : undefined}
+          path="/alerts"
+        />
+      </div>
       <p className="mb-5 mt-1 text-muted">
         {rich(t('signals.intro'), {
           dom: <a className="text-lagoon underline" href="https://www.meteo.gov.lk">{t('common.dom')}</a>,

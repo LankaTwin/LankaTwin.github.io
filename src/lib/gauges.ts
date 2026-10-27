@@ -13,7 +13,7 @@ export const GAUGE_SERVICES = {
   floodMap: `${BASE}/Flood_Map/FeatureServer`,
 }
 export const OFFICIAL_DASHBOARD = 'https://www.arcgis.com/apps/dashboards/2cffe83c9ff5497d97375498bdf3ff38'
-const SOURCE = 'Irrigation Department gauges'
+const SOURCE = 'Irrigation Department (ArcGIS)'
 
 // "Flood Inundation Area" layers of the department's flood map, one per mapped basin.
 export const FLOOD_AREA_LAYERS = [2, 7, 12, 17, 22, 27, 32, 37, 42, 47, 52, 57, 62, 67, 72, 77, 82]

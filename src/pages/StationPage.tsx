@@ -4,7 +4,8 @@ import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, Code2, Download, Sunrise, Sunset, Waves } from 'lucide-react'
 import ChartCard from '../components/ChartCard'
 import { chartTokens, baseOption } from '../components/Chart'
-import { FavoriteButton, Freshness, Segmented, ShareButton, SourceProblem, Skeleton, Stat } from '../components/ui'
+import { FavoriteButton, Freshness, Segmented, SourceProblem, Skeleton, Stat } from '../components/ui'
+import { ShareButton } from '../components/Share'
 import PlacePhoto from '../components/PlacePhoto'
 import WeatherIcon from '../components/WeatherIcon'
 import { skyFor } from '../components/Landscape'
@@ -68,7 +69,7 @@ export default function StationPage() {
   const win = { from: addHours(nowWall, -RANGE[range].back), to: addHours(nowWall, RANGE[range].fwd) }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-5 px-4 py-6">
+    <div className="mx-auto max-w-6xl space-y-5 px-4 py-6 2xl:max-w-[1600px] 2xl:px-8">
       <Link to={`/?s=${st.id}&k=station`} className="inline-flex items-center gap-1 text-sm text-muted hover:text-ink">
         <ArrowLeft className="size-4" aria-hidden /> {t('place.back')}
       </Link>
@@ -295,7 +296,7 @@ function NearbyRivers({ station }: { station: Station }) {
 function EmbedCode({ station }: { station: Station }) {
   const { t, lang } = useT()
   const name = placeName(station, lang)
-  const src = `${location.origin}${location.pathname}#/embed/${station.id}${lang === 'en' ? '' : `?lang=${lang}`}`
+  const src = `${location.origin}/embed/${station.id}${lang === 'en' ? '' : `?lang=${lang}`}`
   const code = `<iframe src="${src}" width="320" height="180" style="border:0" title="${t('place.embedFrame', { place: name })}" loading="lazy"></iframe>`
   const [copied, setCopied] = useState(false)
   return (

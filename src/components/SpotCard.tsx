@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { ShareButton } from './Share'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { ChevronRight, Mountain, X } from 'lucide-react'
@@ -55,7 +56,10 @@ export default function SpotCard({ lat, lon, onClose }: { lat: number; lon: numb
           <h1 className="text-[22px] font-extrabold leading-tight tracking-tight">{t('spot.title')}</h1>
           <p className="text-sm text-muted">{lat.toFixed(4)}°N {lon.toFixed(4)}°E</p>
         </div>
-        <button onClick={onClose} aria-label={t('common.close')} className="rounded p-1.5 text-muted hover:bg-sunken"><X className="size-4" /></button>
+        <div className="flex shrink-0">
+          <ShareButton compact title={t('spot.title')} text={view ? t('share.spotText', { lat: lat.toFixed(4), lon: lon.toFixed(4), m: fmt(d!.elevation), risk: t(`floodLevel.${view.risk.level}` as Key) }) : undefined} path={`/?p=${lat.toFixed(4)},${lon.toFixed(4)}`} />
+          <button onClick={onClose} aria-label={t('common.close')} className="rounded p-1.5 text-muted hover:bg-sunken"><X className="size-4" /></button>
+        </div>
       </div>
 
       {q.error && !d ? <div className="mt-3"><SourceProblem error={q.error} onRetry={() => q.refetch()} /></div> : !view ? (

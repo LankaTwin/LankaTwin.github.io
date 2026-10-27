@@ -12,7 +12,7 @@ straight from the publishers into an interactive map and charts, with no server 
 ## What it does
 
 - **Live map** of all 25 district capitals plus Negombo: temperature, feels-like, rain in the last and next 24 h, humidity, gusts, US AQI and PM2.5, colour-coded on the map.
-- **Official river gauges** (`#/gauges`): live hourly water levels and rainfall from the Irrigation Department's hydrometric stations (the data behind its [Realtime Water Level in Major River](https://www.arcgis.com/apps/dashboards/2cffe83c9ff5497d97375498bdf3ff38) dashboard): station and alert/minor/major flood counts, basin → station picker, current level with trend, 3-day level chart against the gauge's flood levels, daily rainfall, hourly-update and flood-level lists for the last 4 days, last-hour and 24-hour rainfall rankings, CSV export. Gauges also appear on the main map, raise signals, and feed the live and floods pages; river basins, rivers and mapped flood areas can be shown as map layers.
+- **Official river gauges** (`/gauges`): live hourly water levels and rainfall from the Irrigation Department's hydrometric stations (the data behind its [Realtime Water Level in Major River](https://www.arcgis.com/apps/dashboards/2cffe83c9ff5497d97375498bdf3ff38) dashboard): station and alert/minor/major flood counts, basin → station picker, current level with trend, 3-day level chart against the gauge's flood levels, daily rainfall, hourly-update and flood-level lists for the last 4 days, last-hour and 24-hour rainfall rankings, CSV export. Gauges also appear on the main map, raise signals, and feed the live and floods pages; river basins, rivers and mapped flood areas can be shown as map layers.
 - **Rivers**: modelled discharge at 14 points on the Kelani, Kalu, Gin, Nilwala, Walawe, Mahaweli, Deduru, Malwathu and other rivers, with a rise indicator comparing the 10-day forecast peak with the past 30 days.
 - **Satellite overlays** from NASA GIBS: MODIS true colour (any date), 8-day NDVI, IMERG rain rate, land surface temperature.
 - **Place pages**: 24 h / 7 d / 30 d charts for temperature, rain, humidity, wind, air quality and soil moisture; a 7-day forecast; this month's rain against the past decade (ERA5); and solar energy received (NASA POWER).
@@ -20,9 +20,11 @@ straight from the publishers into an interactive map and charts, with no server 
 - **Search** (press `/` or `Ctrl K`) in English, Sinhala or Tamil; **Near me** finds your closest town; **star** places to keep them on top.
 - **Images**: a photo of every town from Wikipedia (credited to its Commons author), illustrated landscapes when offline, weather icons, and a daily MODIS satellite image of the whole island.
 - **Forecast detail**: next-24-hour strip, 7-day outlook with UV and gusts, the current monsoon season, and the rivers near each town.
-- **Share and embed**: share any place, or paste a live `<iframe>` widget into another site (`#/embed/<place>`).
+- **Share and embed**: a share menu on every key screen (WhatsApp, Facebook, X, Telegram, Viber, LinkedIn, email, SMS, copy link or copy a ready-made summary; the system share sheet on phones), and a live `<iframe>` widget for other sites (`/embed/<place>`).
+- **Search-friendly**: real URLs, with an HTML file per page (11 sections, 26 towns, 14 river points and every river gauge) carrying its own title, description, canonical link, Open Graph and Twitter tags, share image and schema.org data (WebSite, Organization, WebApplication, Place, Dataset, BreadcrumbList); `sitemap.xml` and `robots.txt` are generated with the build.
+- **Logo and loading**: a mark drawn from Sri Lanka's real coastline (Natural Earth), app icons for every platform, a branded splash while the app loads, and blur-up placeholders for images.
 - **Safety**: emergency numbers (117, 119, 110, 1990) and opt-in browser notifications for new warnings while the app is open.
-- **Live dashboard** (`#/live`): KPI tiles, a running alert feed (new, escalated and cleared signals with times), town and river boards, a refresh countdown, full screen, keep-screen-on and an optional chime for new warnings. A warning banner and a signal badge in the header show on every page.
+- **Live dashboard** (`/live`): KPI tiles, a running alert feed (new, escalated and cleared signals with times), town and river boards, a refresh countdown, full screen, keep-screen-on and an optional chime for new warnings. A warning banner and a signal badge in the header show on every page.
 - **Phones first**: bottom tab bar (Map, Live, Floods, Signals, More), card layouts in place of wide tables, safe-area padding for notched screens.
 - **Floods**: a screening flood-risk score for every town (rain, nearest river, elevation), a flood-risk overlay and the NASA MODIS near-real-time flood-water layer on the map, rivers running high, and before/during/after flood guidance with emergency numbers (117, 119, 110, 1990, 1919).
 - **Any spot**: tap anywhere on the map for its elevation (Copernicus 90 m DEM), weather, air quality, modelled river flow and flood risk; the spot is kept in the URL so it can be shared.
@@ -38,7 +40,7 @@ straight from the publishers into an interactive map and charts, with no server 
 npm install
 npm run dev
 npm test          # unit tests
-npm run og-image  # redraw public/og-image.png (needs Playwright)
+npm run brand     # redraw the logo, icons and share images in public/ (needs Playwright)
 ```
 
 ## Deploy to GitHub Pages
@@ -48,7 +50,7 @@ npm run og-image  # redraw public/og-image.png (needs Playwright)
 
 Pull requests run `.github/workflows/ci.yml`: typecheck, unit tests (`npm test`) and a production build.
 
-No base-path configuration is needed: the build uses relative asset paths and hash routing, so it also works on a custom domain.
+The site is served from the domain root with real paths (`/station/kandy`). The build writes an HTML file for every page with its own title, description, share image and schema.org data, plus `sitemap.xml`, `robots.txt` and a `404.html` that boots the app for any other path (see `scripts/seo-pages.ts`). Old `#/` links are redirected. To serve from a sub-path or another domain, change `base` in `vite.config.ts` and `SITE.url` in `src/lib/seo.ts`.
 
 ## Stack
 

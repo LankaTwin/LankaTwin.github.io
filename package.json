@@ -11,7 +11,7 @@
     "preview": "vite preview",
     "typecheck": "tsc -b --noEmit",
     "test": "vitest run",
-    "og-image": "node scripts/og-image.mjs"
+    "brand": "node scripts/brand.mjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.105.0",

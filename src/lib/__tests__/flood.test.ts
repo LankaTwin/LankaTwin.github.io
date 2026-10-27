@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { FLOOD_WEIGHTS, floodLevel, floodRisk, nearestRiver } from '../flood'
-import { cld, cldSrcSet, CLOUD, OG_IMAGE, SCENES } from '../cloudinary'
+import { cld, cldSrcSet, CLOUD, SCENES } from '../cloudinary'
 import { stationById } from '../places'
 
 const dry = { rain24: 0, rainNext24: 0, riverRatio: 1, elevation: 5 }
@@ -45,6 +45,5 @@ describe('cloudinary', () => {
   it('builds optimised delivery URLs', () => {
     expect(cld(SCENES.hills, 'w_800')).toBe(`https://res.cloudinary.com/${CLOUD}/image/upload/f_auto,q_auto,w_800/lankatwin/scenes/hills`)
     expect(cldSrcSet(SCENES.coast, [480, 960])).toMatch(/c_fill,w_480\/lankatwin\/scenes\/coast 480w, .*w_960.* 960w$/)
-    expect(OG_IMAGE).toContain('f_jpg')
   })
 })

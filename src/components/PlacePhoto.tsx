@@ -32,6 +32,9 @@ export default function PlacePhoto({ station, sky, className = '', children }: {
     <figure className={`relative overflow-hidden bg-sunken ${className}`}>
       {/* Cloudinary scene of the local landscape; the town photo, when there is one, covers it. */}
       <Scene id={station.zone} sky={sky} shade={false} caption={!showPhoto || !loaded} className="absolute inset-0 h-full w-full" label={showPhoto && loaded ? undefined : t(`place.illustration.${station.zone}` as Key, { place: name })} />
+      {showPhoto && via === 'cdn' && !loaded && (
+        <img src={cldFetch(p.original, 'c_limit,w_48,e_blur:300,q_30')} alt="" aria-hidden decoding="async" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.style.display = 'none' }} className="absolute inset-0 h-full w-full scale-110 object-cover blur-md" />
+      )}
       {showPhoto && (
         <img
           src={via === 'cdn' ? cldFetch(p.original, 'c_limit,w_1280') : p.src}

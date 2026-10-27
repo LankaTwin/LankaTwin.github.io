@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { ShareButton } from '../components/Share'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Layers, X, ChevronRight, LocateFixed, Loader2, Star } from 'lucide-react'
 import MapView, { OVERLAYS } from '../components/MapView'
@@ -11,7 +12,7 @@ import SeasonCard from '../components/SeasonCard'
 import SpotCard from '../components/SpotCard'
 import { FLOOD_LEVELS } from '../lib/flood'
 import { districtName, nearestStation, placeName, riverNames } from '../lib/places'
-import { addDays, timeAgo } from '../lib/time'
+import { addDays, readingTime, timeAgo } from '../lib/time'
 import { rich, type Key } from '../i18n/core'
 import { useT } from '../i18n/useT'
 import { useNowcast, useRivers, type RiverReading, type StationReading } from '../hooks/useLiveData'
@@ -104,7 +105,7 @@ export default function Dashboard() {
         )}
       </div>
 
-      <aside className="border-line bg-canvas lg:w-[392px] lg:shrink-0 lg:overflow-y-auto lg:border-l" aria-label={t('dash.details')}>
+      <aside className="border-line bg-canvas lg:w-[392px] xl:w-[420px] 2xl:w-[460px] lg:shrink-0 lg:overflow-y-auto lg:border-l" aria-label={t('dash.details')}>
         <div className="space-y-4 p-4">
           {weather.error && <SourceProblem error={weather.error} onRetry={() => weather.refetch()} />}
           {air.error && !weather.error && <SourceProblem error={air.error} onRetry={() => air.refetch()} />}
@@ -312,6 +313,7 @@ function StationCard({ r, onClose }: { r: StationReading; onClose: () => void })
           <p className="text-sm text-muted">{t('common.district', { name: districtName(r.station.district, lang) })} · {sky}</p>
         </div>
         <div className="flex shrink-0">
+          <ShareButton compact title={t('place.shareTitle', { place: name })} text={t('place.shareText', { place: name, temp: fmt(r.values.temp), sky: lang === 'en' ? sky.toLowerCase() : sky })} path={`/station/${r.station.id}`} />
           <FavoriteButton id={r.station.id} name={name} />
           <button onClick={onClose} aria-label={t('common.close')} className="rounded p-1.5 text-muted hover:bg-sunken"><X className="size-4" /></button>
         </div>
@@ -352,7 +354,10 @@ function RiverCard({ r, onClose }: { r: RiverReading; onClose: () => void }) {
           <h1 className="text-[22px] font-extrabold leading-tight tracking-tight">{n.river}</h1>
           <p className="text-sm text-muted">{t('river.near', { place: n.near, basin: n.basin })}</p>
         </div>
-        <button onClick={onClose} aria-label={t('common.close')} className="rounded p-1 text-muted hover:bg-sunken"><X className="size-4" /></button>
+        <div className="flex shrink-0">
+          <ShareButton compact title={t('river.at', n)} text={t('share.riverText', { place: t('river.at', n), flow: fmt(r.today), status: riverLevelText(r.level, t) })} path={`/rivers/${r.point.id}`} />
+          <button onClick={onClose} aria-label={t('common.close')} className="rounded p-1.5 text-muted hover:bg-sunken"><X className="size-4" /></button>
+        </div>
       </div>
       <div className="my-3 flex items-center gap-3">
         <span className="text-4xl font-extrabold tracking-tight">{fmt(r.today)}<span className="ml-1 text-base font-medium text-muted">m³/s</span></span>
@@ -412,7 +417,10 @@ function GaugeCard({ g, onClose }: { g: GaugeStation; onClose: () => void }) {
           <h1 className="text-[22px] font-extrabold leading-tight tracking-tight">{g.name}</h1>
           <p className="text-sm text-muted">{t('gauge.basin', { basin: g.basin || '—' })} · {t('gauge.official')}</p>
         </div>
-        <button onClick={onClose} aria-label={t('common.close')} className="rounded p-1 text-muted hover:bg-sunken"><X className="size-4" /></button>
+        <div className="flex shrink-0">
+          <ShareButton compact title={t('share.gaugeTitle', { name: g.name })} text={g.latest && !g.rainOnly ? t('share.gaugeText', { name: g.name, basin: g.basin, level: fmt(g.latest.level, 2), unit: g.unit, status: t(g.stale ? 'gauge.stale' : (`gaugeLevel.${g.level}` as Key)), time: readingTime(g.latest.time, locale) }) : undefined} path={`/gauges/${g.id}`} />
+          <button onClick={onClose} aria-label={t('common.close')} className="rounded p-1.5 text-muted hover:bg-sunken"><X className="size-4" /></button>
+        </div>
       </div>
       <GaugeLevelTile g={g} className="my-3" />
       <div className="grid grid-cols-3 gap-3">

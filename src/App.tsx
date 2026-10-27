@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { createHashRouter, RouterProvider } from 'react-router-dom'
+import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import Layout from './components/Layout'
 import Dashboard from './pages/Dashboard'
 import { Skeleton } from './components/ui'
@@ -28,8 +28,9 @@ function NotFound() {
   return <div className="mx-auto max-w-3xl p-6"><h1 className="text-2xl font-bold">{t('notFound.title')}</h1><p className="mt-2 text-muted">{t('notFound.body')}</p></div>
 }
 
-// Hash routing: GitHub Pages has no server-side rewrites, so deep links must live after the '#'.
-const router = createHashRouter([
+// Real paths: the build writes an HTML file for every page and a 404.html that boots the app
+// for anything else (GitHub Pages has no rewrites). Old #/ links are moved over in index.html.
+const router = createBrowserRouter([
   {
     path: 'embed/:id',
     element: <Suspense fallback={null}><EmbedPage /></Suspense>,

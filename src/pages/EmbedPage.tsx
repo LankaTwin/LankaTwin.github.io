@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import WeatherIcon from '../components/WeatherIcon'
-import { Mark } from '../components/Layout'
+import { Mark } from '../components/Logo'
 import { useNowcast } from '../hooks/useLiveData'
 import { colorFor, fmt, inkOn, METRICS, weatherText } from '../lib/metrics'
 import { placeName, stationById } from '../lib/places'
@@ -10,7 +10,7 @@ import { useSettings } from '../stores/settings'
 
 /**
  * A small live card for one place, meant for an <iframe> on another site:
- *   <iframe src="https://lankatwin.github.io/#/embed/kandy" width="320" height="180"></iframe>
+ *   <iframe src="https://lankatwin.github.io/embed/kandy" width="320" height="180"></iframe>
  * Add ?theme=dark or ?theme=light to force a theme, and ?lang=si or ?lang=ta for Sinhala or Tamil.
  */
 export default function EmbedPage() {
@@ -32,7 +32,7 @@ export default function EmbedPage() {
     document.documentElement.lang = lang
   }, [theme, lang])
 
-  const appUrl = `${location.origin}${location.pathname}#/station/${id}`
+  const appUrl = `${location.origin}/station/${id}`
   if (!st) return <p className="p-3 text-sm">{t('embed.unknown', { id: id ?? '' })}</p>
   const aqiColor = colorFor(METRICS.aqi, r?.values.aqi)
 

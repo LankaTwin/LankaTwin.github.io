@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { ShareButton } from '../components/Share'
 import { ArrowDownWideNarrow, Download } from 'lucide-react'
 import { Freshness, SourceProblem, Skeleton } from '../components/ui'
 import { useTitle } from '../hooks/useApp'
@@ -34,13 +35,19 @@ export default function AirPage() {
   const label = (l: string) => (l.includes('.') ? t(l as Key) : l)
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6">
+    <div className="mx-auto max-w-6xl px-4 py-6 2xl:max-w-[1600px] 2xl:px-8">
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div className="max-w-3xl">
           <h1 className="text-3xl font-extrabold tracking-tight">{t('air.title')}</h1>
           <p className="mt-1 text-muted">{t('air.intro')}</p>
           {worst?.air?.aqi != null && <p className="mt-2 text-sm font-medium">{t('air.worst', { place: placeName(worst.station, lang), n: fmt(worst.air.aqi) })}</p>}
         </div>
+        <div className="flex gap-1.5">
+        <ShareButton
+          title={t('share.airTitle')}
+          text={worst?.air?.aqi != null ? t('air.worst', { place: placeName(worst.station, lang), n: fmt(worst.air.aqi) }) : undefined}
+          path="/air"
+        />
         <button
           disabled={!readings}
           onClick={() => downloadCSV(`lankatwin-air-${colomboToday()}.csv`, ['place', 'time_asia_colombo', ...COLS.map((c) => c.id)], (readings ?? []).map((r) => [r.station.name, r.air?.time, ...COLS.map((c) => val(r, c.id))]))}
@@ -48,6 +55,7 @@ export default function AirPage() {
         >
           <Download className="size-4" aria-hidden /> CSV
         </button>
+        </div>
       </div>
 
       {air.error && <div className="mb-3"><SourceProblem error={air.error} onRetry={() => air.refetch()} /></div>}
@@ -77,7 +85,7 @@ export default function AirPage() {
                 <th className="p-3 font-medium">{t('places.place')}</th>
                 {COLS.map((c) => (
                   <th key={c.id} className="p-3 text-right font-medium" aria-sort={sort === c.id ? 'descending' : undefined}>
-                    <button onClick={() => setSort(c.id)} className={`inline-flex items-center gap-1 hover:text-ink ${sort === c.id ? 'text-ink' : ''}`}>
+                    <button onClick={() => setSort(c.id)} className={`inline-flex min-h-7 items-center gap-1 hover:text-ink ${sort === c.id ? 'text-ink' : ''}`}>
                       {sort === c.id && <ArrowDownWideNarrow className="size-3.5" aria-hidden />}{label(c.label)}
                     </button>
                   </th>

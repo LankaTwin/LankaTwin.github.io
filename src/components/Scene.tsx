@@ -25,6 +25,10 @@ export default function Scene({ id, sky, className = '', sizes = '(min-width: 11
   return (
     <figure className={`relative overflow-hidden bg-sunken ${className}`}>
       <Landscape zone={zone} sky={sky ?? (id === 'flood' ? 'rain' : 'day')} className="absolute inset-0 h-full w-full" />
+      {/* A ~1 KB blurred preview fills in first, then the full image fades over it. */}
+      {state === 'loading' && (
+        <img src={cld(SCENES[id], 'c_fill,w_48,e_blur:300,q_30')} alt="" aria-hidden decoding="async" className="absolute inset-0 h-full w-full scale-110 object-cover blur-md" />
+      )}
       {state !== 'error' && (
         <img
           src={cld(SCENES[id], 'c_fill,w_1280')}
