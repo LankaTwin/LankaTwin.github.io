@@ -4,7 +4,7 @@ import type { RiverPoint, Station } from './places'
 const TZ = 'Asia/Colombo'
 
 export class SourceError extends Error {
-  constructor(public source: string, message: string, public status?: number) {
+  constructor(public source: string, message: string, public status?: number, public code?: 'timeout' | 'network') {
     super(message)
   }
 }
@@ -26,8 +26,8 @@ export async function fetchJson<T>(source: string, url: string, signal?: AbortSi
     return (await res.json()) as T
   } catch (e) {
     if (e instanceof SourceError) throw e
-    if ((e as Error).name === 'AbortError') throw new SourceError(source, 'The request timed out')
-    throw new SourceError(source, 'Network unreachable or blocked')
+    if ((e as Error).name === 'AbortError') throw new SourceError(source, 'The request timed out', undefined, 'timeout')
+    throw new SourceError(source, 'Network unreachable or blocked', undefined, 'network')
   } finally {
     clearTimeout(timer)
   }

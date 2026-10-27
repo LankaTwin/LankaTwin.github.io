@@ -2,8 +2,24 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FileText, MapPin, Search, Waves } from 'lucide-react'
 import { search, type SearchItem } from '../lib/search'
+import { useT } from '../i18n/useT'
+import { districtName, placeName, riverById, riverNames, stationById } from '../lib/places'
+import type { I18n } from '../i18n/useT'
 
 const ICON = { place: MapPin, river: Waves, page: FileText }
+
+/** Title and subtitle of a result in the interface language. */
+function label(r: SearchItem, { t, lang }: I18n) {
+  if (r.kind === 'page' && r.navKey) return { title: t(r.navKey), sub: t('search.page') }
+  if (r.kind === 'place') {
+    const s = stationById(r.id)!
+    const others = [s.name, s.si, s.ta].filter((n) => n !== placeName(s, lang)).join(' · ')
+    return { title: placeName(s, lang), sub: `${t('common.district', { name: districtName(s.district, lang) })} · ${others}` }
+  }
+  const p = riverById(r.id)!
+  const n = riverNames(p, lang)
+  return { title: t('river.at', n), sub: t('search.basin', { name: n.basin }) }
+}
 
 /** Ctrl/⌘ K or "/" opens a quick finder for places, river points and pages. */
 export default function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -12,6 +28,8 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
   const nav = useNavigate()
   const input = useRef<HTMLInputElement>(null)
   const results = useMemo(() => search(q), [q])
+  const i18n = useT()
+  const { t } = i18n
 
   useEffect(() => {
     if (open) { setQ(''); setI(0); setTimeout(() => input.current?.focus(), 0) }
@@ -26,7 +44,7 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Search LankaTwin"
+        aria-label={t('search.dialog')}
         className="w-full max-w-lg overflow-hidden rounded-xl border border-line bg-surface shadow-2xl"
         onMouseDown={(e) => e.stopPropagation()}
       >
@@ -42,7 +60,7 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
               else if (e.key === 'ArrowUp') { e.preventDefault(); setI((n) => Math.max(0, n - 1)) }
               else if (e.key === 'Enter') go(results[i])
             }}
-            placeholder="Search towns, rivers, pages — English, සිංහල, தமிழ்"
+            placeholder={t('search.placeholder')}
             className="h-12 flex-1 bg-transparent text-[15px] outline-none placeholder:text-muted"
             role="combobox"
             aria-expanded="true"
@@ -52,9 +70,10 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
           <kbd className="rounded border border-line px-1.5 text-[11px] text-muted">Esc</kbd>
         </div>
         <ul id="lt-search-results" role="listbox" className="max-h-[50vh] overflow-y-auto p-1.5">
-          {results.length === 0 && <li className="px-3 py-6 text-center text-sm text-muted">Nothing matches “{q}”.</li>}
+          {results.length === 0 && <li className="px-3 py-6 text-center text-sm text-muted">{t('search.none', { q })}</li>}
           {results.map((r, k) => {
             const Icon = ICON[r.kind]
+            const l = label(r, i18n)
             return (
               <li
                 key={r.id}
@@ -67,15 +86,15 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
               >
                 <Icon className={`size-4 shrink-0 ${k === i ? 'text-lagoon' : 'text-muted'}`} aria-hidden />
                 <div className="min-w-0">
-                  <div className="truncate text-sm font-semibold">{r.title}</div>
-                  <div className="truncate text-xs text-muted">{r.sub}</div>
+                  <div className="truncate text-sm font-semibold">{l.title}</div>
+                  <div className="truncate text-xs text-muted">{l.sub}</div>
                 </div>
               </li>
             )
           })}
         </ul>
         <div className="flex gap-3 border-t border-line px-3 py-2 text-[11px] text-muted">
-          <span><kbd className="font-sans">↑↓</kbd> move</span><span><kbd className="font-sans">↵</kbd> open</span><span><kbd className="font-sans">/</kbd> or <kbd className="font-sans">Ctrl K</kbd> search</span>
+          <span><kbd className="font-sans">↑↓</kbd> {t('search.move')}</span><span><kbd className="font-sans">↵</kbd> {t('search.open')}</span><span><kbd className="font-sans">/</kbd> {t('search.hint')}</span>
         </div>
       </div>
     </div>

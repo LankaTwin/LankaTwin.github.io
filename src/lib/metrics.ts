@@ -1,4 +1,5 @@
 // Map variables, colour scales, thresholds and weather-code text.
+import type { Key, T } from '../i18n/core'
 
 export type MetricId = 'temp' | 'feels' | 'rain24' | 'rainNext24' | 'humidity' | 'gust' | 'aqi' | 'pm25'
 
@@ -76,14 +77,28 @@ export function fmt(v: number | null | undefined, decimals = 0) {
 }
 
 /** WHO UV index category. */
-export function uvBand(uv: number | null | undefined) {
+export function uvBand(uv: number | null | undefined, t: T) {
   if (uv == null) return '—'
-  if (uv < 3) return 'Low'
-  if (uv < 6) return 'Moderate'
-  if (uv < 8) return 'High'
-  if (uv < 11) return 'Very high'
-  return 'Extreme'
+  if (uv < 3) return t('uv.low')
+  if (uv < 6) return t('uv.moderate')
+  if (uv < 8) return t('uv.high')
+  if (uv < 11) return t('uv.veryHigh')
+  return t('uv.extreme')
 }
+
+const BAND_KEYS: Record<string, Key> = {
+  dry: 'band.dry', Good: 'band.good', Moderate: 'band.moderate', Sensitive: 'band.sensitive',
+  Unhealthy: 'band.unhealthy', 'Very unhealthy': 'band.veryUnhealthy', Hazardous: 'band.hazardous',
+}
+
+/** Legend labels are numeric ranges or a few words; translate the words. */
+export const bandText = (label: string, t: T) => (BAND_KEYS[label] ? t(BAND_KEYS[label]) : label)
+
+export const metricText = (id: MetricId, t: T) => ({
+  label: t(`metric.${id}.label` as Key),
+  short: t(`metric.${id}.short` as Key),
+  help: t(`metric.${id}.help` as Key),
+})
 
 // ---------- Rivers ----------
 
@@ -107,16 +122,11 @@ export function riverLevel(ratio: number | null): RiverLevel {
 
 // ---------- WMO weather codes ----------
 
-const WMO: Record<number, string> = {
-  0: 'Clear sky', 1: 'Mainly clear', 2: 'Partly cloudy', 3: 'Overcast',
-  45: 'Fog', 48: 'Rime fog',
-  51: 'Light drizzle', 53: 'Drizzle', 55: 'Heavy drizzle', 56: 'Freezing drizzle', 57: 'Freezing drizzle',
-  61: 'Light rain', 63: 'Rain', 65: 'Heavy rain', 66: 'Freezing rain', 67: 'Freezing rain',
-  71: 'Light snow', 73: 'Snow', 75: 'Heavy snow', 77: 'Snow grains',
-  80: 'Light showers', 81: 'Showers', 82: 'Violent showers', 85: 'Snow showers', 86: 'Snow showers',
-  95: 'Thunderstorm', 96: 'Thunderstorm, hail', 99: 'Severe thunderstorm, hail',
-}
-export const weatherText = (code: number | null | undefined) => (code == null ? '—' : WMO[code] ?? `Code ${code}`)
+const WMO_CODES = new Set([0, 1, 2, 3, 45, 48, 51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 71, 73, 75, 77, 80, 81, 82, 85, 86, 95, 96, 99])
+export const weatherText = (code: number | null | undefined, t: T) =>
+  code == null ? '—' : WMO_CODES.has(code) ? t(`wmo.${code}` as Key) : t('wmo.unknown', { code })
+
+export const riverLevelText = (level: RiverLevel, t: T) => t(`riverLevel.${level}` as Key)
 
 export function compass(deg: number | null | undefined) {
   if (deg == null) return ''

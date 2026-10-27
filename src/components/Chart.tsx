@@ -5,6 +5,8 @@ import { DataZoomComponent, GridComponent, LegendComponent, MarkAreaComponent, M
 import { CanvasRenderer } from 'echarts/renderers'
 import type { EChartsCoreOption } from 'echarts/core'
 import { useSettings } from '../stores/settings'
+import { localeOf } from '../i18n/core'
+import { calendarNames } from '../lib/time'
 
 echarts.use([LineChart, BarChart, GridComponent, TooltipComponent, LegendComponent, DataZoomComponent, MarkLineComponent, MarkAreaComponent, CanvasRenderer])
 
@@ -42,15 +44,20 @@ const Chart = forwardRef<ChartHandle, Props>(function Chart({ option, height = 2
   const el = useRef<HTMLDivElement>(null)
   const inst = useRef<echarts.ECharts | null>(null)
   const theme = useSettings((s) => s.theme)
+  const lang = useSettings((s) => s.lang)
 
+  // Month and weekday names on time axes follow the interface language.
   useEffect(() => {
     if (!el.current) return
-    const c = echarts.init(el.current, undefined, { renderer: 'canvas' })
+    // ECharts fills the rest of a partial locale from its English default.
+    const locale = { time: calendarNames(localeOf(lang)) } as unknown as echarts.EChartsInitOpts['locale']
+    const c = echarts.init(el.current, undefined, { renderer: 'canvas', locale })
     inst.current = c
     const ro = new ResizeObserver(() => c.resize())
     ro.observe(el.current)
+    c.setOption(option, true)
     return () => { ro.disconnect(); c.dispose(); inst.current = null }
-  }, [])
+  }, [lang]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     inst.current?.setOption(option, true)

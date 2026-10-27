@@ -1,5 +1,6 @@
 import type { EChartsCoreOption } from 'echarts/core'
 import { baseOption, chartTokens } from '../components/Chart'
+import { currentI18n } from '../i18n/useT'
 
 export interface SeriesSpec {
   name: string
@@ -15,6 +16,7 @@ export interface SeriesSpec {
 /** A time chart with a "now" rule and a shaded forecast region. */
 export function timeOption(specs: SeriesSpec[], opts: { unit: string; now?: string; min?: number; max?: number; yMin0?: boolean; decimals?: number }): EChartsCoreOption {
   const t = chartTokens()
+  const { t: tr } = currentI18n()
   const base = baseOption() as Record<string, any> // eslint-disable-line @typescript-eslint/no-explicit-any
   const last = specs[0]?.data.at(-1)?.[0]
   const d = opts.decimals ?? 1
@@ -39,11 +41,11 @@ export function timeOption(specs: SeriesSpec[], opts: { unit: string; now?: stri
       areaStyle: s.area ? { color: s.color, opacity: 0.12 } : undefined,
       markLine:
         i === 0 && opts.now
-          ? { silent: true, symbol: 'none', label: { formatter: 'now', color: t.muted, fontSize: 10, position: 'insideEndTop' }, lineStyle: { color: t.ink, type: 'solid', width: 1, opacity: 0.5 }, data: [{ xAxis: opts.now }] }
+          ? { silent: true, symbol: 'none', label: { formatter: tr('chart.now'), color: t.muted, fontSize: 10, position: 'insideEndTop' }, lineStyle: { color: t.ink, type: 'solid', width: 1, opacity: 0.5 }, data: [{ xAxis: opts.now }] }
           : undefined,
       markArea:
         i === 0 && opts.now && last && last > opts.now
-          ? { silent: true, itemStyle: { color: t.muted, opacity: 0.07 }, label: { show: true, formatter: 'forecast', color: t.muted, fontSize: 10, position: 'insideTopRight' }, data: [[{ xAxis: opts.now }, { xAxis: last }]] }
+          ? { silent: true, itemStyle: { color: t.muted, opacity: 0.07 }, label: { show: true, formatter: tr('chart.forecast'), color: t.muted, fontSize: 10, position: 'insideTopRight' }, data: [[{ xAxis: opts.now }, { xAxis: last }]] }
           : undefined,
     })),
   }

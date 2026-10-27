@@ -47,7 +47,7 @@
 }
 
 @theme {
-  --font-sans: "Schibsted Grotesk", "Noto Sans Sinhala", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Schibsted Grotesk", "Noto Sans Sinhala", "Noto Sans Tamil", ui-sans-serif, system-ui, sans-serif;
   --color-canvas: var(--c-canvas);
   --color-surface: var(--c-surface);
   --color-sunken: var(--c-sunken);

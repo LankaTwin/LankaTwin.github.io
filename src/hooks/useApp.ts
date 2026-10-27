@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
 import { buildAlerts } from '../lib/alerts'
+import { tFor } from '../i18n/core'
 import { STATIONS } from '../lib/places'
 import { useSettings } from '../stores/settings'
 import { useNowcast, useRivers } from './useLiveData'
 
-/** Sets the browser tab title for the current screen. */
+/** Pass an already-translated title; with none, the app's own name in the interface language. */
 export function useTitle(title?: string) {
+  const lang = useSettings((s) => s.lang)
   useEffect(() => {
-    document.title = title ? `${title} · LankaTwin` : 'LankaTwin — live weather, rivers and air for Sri Lanka'
-  }, [title])
+    document.title = title ? `${title} · LankaTwin` : tFor(lang)('title.default')
+  }, [title, lang])
 }
 
 export function useOnline() {
@@ -49,17 +51,18 @@ const SEEN_KEY = 'lt-notified'
  * Without a server there is no background push, so nothing arrives when the tab is closed.
  */
 export function useSignalNotifications() {
-  const { notify, favorites } = useSettings()
+  const { notify, favorites, lang } = useSettings()
   const { readings } = useNowcast()
   const { rivers } = useRivers()
-  const alerts = useMemo(() => buildAlerts(readings, rivers), [readings, rivers])
+  const alerts = useMemo(() => buildAlerts(readings, rivers, lang), [readings, rivers, lang])
 
   useEffect(() => {
     if (!notify || !notificationsSupported() || Notification.permission !== 'granted' || !readings) return
     let seen: string[] = []
     try { seen = JSON.parse(sessionStorage.getItem(SEEN_KEY) ?? '[]') } catch { /* storage blocked */ }
-    const favNames = new Set(STATIONS.filter((s) => favorites.includes(s.id)).map((s) => s.name))
-    const fresh = alerts.filter((a) => !seen.includes(`${a.id}:${a.level}`) && (a.level === 'warning' || favNames.has(a.place)))
+    // Alert ids are `<kind>-<station id>`, so starred places are matched by id, not by (translated) name.
+    const favIds = new Set(STATIONS.filter((s) => favorites.includes(s.id)).map((s) => s.id))
+    const fresh = alerts.filter((a) => !seen.includes(`${a.id}:${a.level}`) && (a.level === 'warning' || favIds.has(a.id.slice(a.id.indexOf('-') + 1))))
     for (const a of fresh.slice(0, 3)) {
       try {
         const n = new Notification(`${a.title} · ${a.place}`, { body: a.detail, icon: './icon-192.png', tag: a.id })

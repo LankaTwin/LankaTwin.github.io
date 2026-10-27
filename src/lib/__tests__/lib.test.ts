@@ -3,6 +3,7 @@ import { buildAlerts, RULES } from '../alerts'
 import { bandFor, colorFor, compass, METRICS, riverLevel, uvBand } from '../metrics'
 import { distanceKm, nearestStation, riversNear, STATIONS, stationById } from '../places'
 import { search } from '../search'
+import { tFor } from '../../i18n/core'
 import { seasonFor, SEASONS } from '../season'
 import { addDays, addHours } from '../time'
 import type { RiverReading, StationReading } from '../../hooks/useLiveData'
@@ -61,7 +62,7 @@ describe('metrics', () => {
   })
 
   it('names UV categories and compass points', () => {
-    expect([2, 3, 6, 8, 11].map(uvBand)).toEqual(['Low', 'Moderate', 'High', 'Very high', 'Extreme'])
+    expect([2, 3, 6, 8, 11].map((u) => uvBand(u, tFor('en')))).toEqual(['Low', 'Moderate', 'High', 'Very high', 'Extreme'])
     expect([0, 90, 225, 359].map(compass)).toEqual(['N', 'E', 'SW', 'N'])
   })
 })

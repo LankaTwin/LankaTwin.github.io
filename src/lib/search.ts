@@ -1,4 +1,6 @@
 import { RIVER_POINTS, STATIONS } from './places'
+import { DICTS } from '../i18n/core'
+import type { Key } from '../i18n/en'
 
 export interface SearchItem {
   id: string
@@ -8,16 +10,19 @@ export interface SearchItem {
   href: string
   /** Lower-cased text the query is matched against. */
   haystack: string
+  /** Pages: the nav label to show in the interface language. */
+  navKey?: Key
 }
 
-const PAGES: [string, string, string][] = [
-  ['Map', '/', 'live map home'],
-  ['Places', '/stations', 'all towns table districts'],
-  ['Rivers', '/rivers', 'discharge flood glofas'],
-  ['Compare', '/compare', 'chart side by side'],
-  ['Signals', '/alerts', 'alerts warnings emergency numbers notifications'],
-  ['Sources', '/sources', 'data licences attribution'],
-  ['About', '/about', 'settings roadmap help'],
+// Pages are found by their name in any language plus a few English keywords.
+const PAGES: [Key, string, string][] = [
+  ['nav.map', '/', 'live map home'],
+  ['nav.places', '/stations', 'all towns table districts'],
+  ['nav.rivers', '/rivers', 'discharge flood glofas'],
+  ['nav.compare', '/compare', 'chart side by side'],
+  ['nav.signals', '/alerts', 'alerts warnings emergency numbers notifications'],
+  ['nav.sources', '/sources', 'data licences attribution'],
+  ['nav.about', '/about', 'settings roadmap help language'],
 ]
 
 export const SEARCH_INDEX: SearchItem[] = [
@@ -27,9 +32,12 @@ export const SEARCH_INDEX: SearchItem[] = [
   })),
   ...RIVER_POINTS.map((r) => ({
     id: r.id, kind: 'river' as const, title: `${r.river} at ${r.near}`, sub: `${r.basin} basin`, href: `/rivers/${r.id}`,
-    haystack: [r.river, r.near, r.basin, 'river'].join(' ').toLowerCase(),
+    haystack: [r.river, r.near, r.basin, ...r.si, ...r.ta, 'river'].join(' ').toLowerCase(),
   })),
-  ...PAGES.map(([title, href, words]) => ({ id: `page-${href}`, kind: 'page' as const, title, sub: 'Page', href, haystack: `${title} ${words}`.toLowerCase() })),
+  ...PAGES.map(([key, href, words]) => ({
+    id: `page-${href}`, kind: 'page' as const, title: DICTS.en[key], sub: 'Page', href, navKey: key,
+    haystack: [DICTS.en[key], DICTS.si[key], DICTS.ta[key], words].join(' ').toLowerCase(),
+  })),
 ]
 
 /** Rank: name starts with the query, then a word starts with it, then it appears anywhere. */

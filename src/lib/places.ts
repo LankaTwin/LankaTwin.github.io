@@ -55,6 +55,9 @@ export interface RiverPoint {
   basin: string
   lat: number
   lon: number
+  /** [river, near, basin] in Sinhala and Tamil. */
+  si: [string, string, string]
+  ta: [string, string, string]
 }
 
 /**
@@ -62,20 +65,20 @@ export interface RiverPoint {
  * nearest GloFAS cell sits on the river channel rather than the sea.
  */
 export const RIVER_POINTS: RiverPoint[] = [
-  { id: 'kelani-hanwella', river: 'Kelani Ganga', near: 'Hanwella', basin: 'Kelani', lat: 6.901, lon: 80.085 },
-  { id: 'kalu-ratnapura', river: 'Kalu Ganga', near: 'Ratnapura', basin: 'Kalu', lat: 6.68, lon: 80.4 },
-  { id: 'kalu-ellagawa', river: 'Kalu Ganga', near: 'Ellagawa', basin: 'Kalu', lat: 6.73, lon: 80.215 },
-  { id: 'gin-baddegama', river: 'Gin Ganga', near: 'Baddegama', basin: 'Gin', lat: 6.166, lon: 80.18 },
-  { id: 'nilwala-thalgahagoda', river: 'Nilwala Ganga', near: 'Thalgahagoda', basin: 'Nilwala', lat: 5.99, lon: 80.51 },
-  { id: 'walawe-embilipitiya', river: 'Walawe Ganga', near: 'Embilipitiya', basin: 'Walawe', lat: 6.34, lon: 80.85 },
-  { id: 'mahaweli-peradeniya', river: 'Mahaweli Ganga', near: 'Peradeniya', basin: 'Mahaweli', lat: 7.269, lon: 80.596 },
-  { id: 'mahaweli-manampitiya', river: 'Mahaweli Ganga', near: 'Manampitiya', basin: 'Mahaweli', lat: 7.913, lon: 81.089 },
-  { id: 'attanagalu-dunamale', river: 'Attanagalu Oya', near: 'Dunamale', basin: 'Attanagalu', lat: 7.1, lon: 80.03 },
-  { id: 'maha-badalgama', river: 'Maha Oya', near: 'Badalgama', basin: 'Maha Oya', lat: 7.29, lon: 79.98 },
-  { id: 'deduru-moragaswewa', river: 'Deduru Oya', near: 'Moragaswewa', basin: 'Deduru', lat: 7.65, lon: 80.03 },
-  { id: 'malwathu-anuradhapura', river: 'Malwathu Oya', near: 'Anuradhapura', basin: 'Malwathu', lat: 8.33, lon: 80.39 },
-  { id: 'kirindi-wellawaya', river: 'Kirindi Oya', near: 'Wellawaya', basin: 'Kirindi', lat: 6.73, lon: 81.1 },
-  { id: 'gal-inginiyagala', river: 'Gal Oya', near: 'Inginiyagala', basin: 'Gal Oya', lat: 7.22, lon: 81.54 },
+  { id: 'kelani-hanwella', river: 'Kelani Ganga', near: 'Hanwella', basin: 'Kelani', lat: 6.901, lon: 80.085, si: ['කැලණි ගඟ', 'හංවැල්ල', 'කැලණි'], ta: ['களனி கங்கை', 'ஹங்வெல்ல', 'களனி'] },
+  { id: 'kalu-ratnapura', river: 'Kalu Ganga', near: 'Ratnapura', basin: 'Kalu', lat: 6.68, lon: 80.4, si: ['කළු ගඟ', 'රත්නපුර', 'කළු'], ta: ['களு கங்கை', 'இரத்தினபுரி', 'களு'] },
+  { id: 'kalu-ellagawa', river: 'Kalu Ganga', near: 'Ellagawa', basin: 'Kalu', lat: 6.73, lon: 80.215, si: ['කළු ගඟ', 'එල්ලගාව', 'කළු'], ta: ['களு கங்கை', 'எல்லகாவ', 'களு'] },
+  { id: 'gin-baddegama', river: 'Gin Ganga', near: 'Baddegama', basin: 'Gin', lat: 6.166, lon: 80.18, si: ['ගිං ගඟ', 'බද්දේගම', 'ගිං'], ta: ['ஜின் கங்கை', 'பத்தேகம', 'ஜின்'] },
+  { id: 'nilwala-thalgahagoda', river: 'Nilwala Ganga', near: 'Thalgahagoda', basin: 'Nilwala', lat: 5.99, lon: 80.51, si: ['නිල්වලා ගඟ', 'තල්ගහගොඩ', 'නිල්වලා'], ta: ['நில்வளா கங்கை', 'தல்கஹகொட', 'நில்வளா'] },
+  { id: 'walawe-embilipitiya', river: 'Walawe Ganga', near: 'Embilipitiya', basin: 'Walawe', lat: 6.34, lon: 80.85, si: ['වලවේ ගඟ', 'ඇඹිලිපිටිය', 'වලවේ'], ta: ['வளவை கங்கை', 'எம்பிலிப்பிட்டிய', 'வளவை'] },
+  { id: 'mahaweli-peradeniya', river: 'Mahaweli Ganga', near: 'Peradeniya', basin: 'Mahaweli', lat: 7.269, lon: 80.596, si: ['මහවැලි ගඟ', 'පේරාදෙණිය', 'මහවැලි'], ta: ['மகாவலி கங்கை', 'பேராதனை', 'மகாவலி'] },
+  { id: 'mahaweli-manampitiya', river: 'Mahaweli Ganga', near: 'Manampitiya', basin: 'Mahaweli', lat: 7.913, lon: 81.089, si: ['මහවැලි ගඟ', 'මනම්පිටිය', 'මහවැලි'], ta: ['மகாவலி கங்கை', 'மனம்பிட்டிய', 'மகாவலி'] },
+  { id: 'attanagalu-dunamale', river: 'Attanagalu Oya', near: 'Dunamale', basin: 'Attanagalu', lat: 7.1, lon: 80.03, si: ['අත්තනගලු ඔය', 'දුනමලේ', 'අත්තනගලු'], ta: ['அத்தனகலு ஓயா', 'துனமலே', 'அத்தனகலு'] },
+  { id: 'maha-badalgama', river: 'Maha Oya', near: 'Badalgama', basin: 'Maha Oya', lat: 7.29, lon: 79.98, si: ['මහ ඔය', 'බඩල්ගම', 'මහ ඔය'], ta: ['மகா ஓயா', 'படல்கம', 'மகா ஓயா'] },
+  { id: 'deduru-moragaswewa', river: 'Deduru Oya', near: 'Moragaswewa', basin: 'Deduru', lat: 7.65, lon: 80.03, si: ['දැදුරු ඔය', 'මොරගස්වැව', 'දැදුරු'], ta: ['தெதுரு ஓயா', 'மொரகஸ்வெவ', 'தெதுரு'] },
+  { id: 'malwathu-anuradhapura', river: 'Malwathu Oya', near: 'Anuradhapura', basin: 'Malwathu', lat: 8.33, lon: 80.39, si: ['මල්වතු ඔය', 'අනුරාධපුරය', 'මල්වතු'], ta: ['மல்வத்து ஓயா', 'அனுராதபுரம்', 'மல்வத்து'] },
+  { id: 'kirindi-wellawaya', river: 'Kirindi Oya', near: 'Wellawaya', basin: 'Kirindi', lat: 6.73, lon: 81.1, si: ['කිරිඳි ඔය', 'වැල්ලවාය', 'කිරිඳි'], ta: ['கிரிந்தி ஓயா', 'வெல்லவாய', 'கிரிந்தி'] },
+  { id: 'gal-inginiyagala', river: 'Gal Oya', near: 'Inginiyagala', basin: 'Gal Oya', lat: 7.22, lon: 81.54, si: ['ගල් ඔය', 'ඉඟිනියාගල', 'ගල් ඔය'], ta: ['கல் ஓயா', 'இங்கினியாகல', 'கல் ஓயா'] },
 ]
 
 export const SL_CENTER: [number, number] = [80.7, 7.85]
@@ -108,4 +111,20 @@ export function riversNear(p: { lat: number; lon: number }, km = 45) {
   return RIVER_POINTS.map((r) => ({ point: r, km: distanceKm(p, r) }))
     .filter((x) => x.km <= km)
     .sort((a, b) => a.km - b.km)
+}
+
+type L = 'en' | 'si' | 'ta'
+
+/** A town's name in the interface language. */
+export const placeName = (s: Station, lang: L) => (lang === 'si' ? s.si : lang === 'ta' ? s.ta : s.name)
+
+/** A district's name; every district shares its name with a town in STATIONS. */
+export function districtName(district: string, lang: L) {
+  const s = STATIONS.find((x) => x.name === district)
+  return s ? placeName(s, lang) : district
+}
+
+export function riverNames(r: RiverPoint, lang: L) {
+  const [river, near, basin] = lang === 'si' ? r.si : lang === 'ta' ? r.ta : [r.river, r.near, r.basin]
+  return { river, near, basin }
 }

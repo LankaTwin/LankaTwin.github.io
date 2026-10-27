@@ -1,7 +1,9 @@
 import { useState, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { fetchPlacePhoto } from '../lib/api'
-import type { Station } from '../lib/places'
+import { districtName, placeName, type Station } from '../lib/places'
+import type { Key } from '../i18n/core'
+import { useT } from '../i18n/useT'
 import Landscape, { type Sky } from './Landscape'
 
 /**
@@ -16,6 +18,8 @@ export default function PlacePhoto({ station, sky, className = '', children }: {
     gcTime: 7 * 86400_000,
     retry: 1,
   })
+  const { t, lang } = useT()
+  const name = placeName(station, lang)
   const [failed, setFailed] = useState(false)
   const [loaded, setLoaded] = useState(false)
   const p = q.data
@@ -23,11 +27,11 @@ export default function PlacePhoto({ station, sky, className = '', children }: {
 
   return (
     <figure className={`relative overflow-hidden bg-sunken ${className}`}>
-      <Landscape zone={station.zone} sky={sky} className="absolute inset-0 h-full w-full" label={showPhoto ? undefined : `Illustration of ${station.zone === 'hills' ? 'hill country' : station.zone === 'coast' ? 'the coast' : 'the dry-zone plains'} around ${station.name}`} />
+      <Landscape zone={station.zone} sky={sky} className="absolute inset-0 h-full w-full" label={showPhoto ? undefined : t(`place.illustration.${station.zone}` as Key, { place: name })} />
       {showPhoto && (
         <img
           src={p.src}
-          alt={`${station.name}, ${station.district} District`}
+          alt={t('place.photoAlt', { place: name, district: districtName(station.district, lang) })}
           loading="lazy"
           decoding="async"
           referrerPolicy="no-referrer"
@@ -41,7 +45,7 @@ export default function PlacePhoto({ station, sky, className = '', children }: {
       {showPhoto && loaded && (
         <figcaption className="absolute right-2 bottom-1.5 max-w-[70%] truncate text-right text-[10px] text-white/80">
           <a href={p.fileUrl ?? p.pageUrl} className="hover:underline" target="_blank" rel="noreferrer">
-            Photo{p.artist ? `: ${p.artist}` : ''}{p.license ? ` · ${p.license}` : ''} · Wikimedia
+            {t('place.photoCredit')}{p.artist ? `: ${p.artist}` : ''}{p.license ? ` · ${p.license}` : ''} · Wikimedia
           </a>
         </figcaption>
       )}

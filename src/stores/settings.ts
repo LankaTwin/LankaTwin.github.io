@@ -1,12 +1,14 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { MetricId } from '../lib/metrics'
+import { detectLang, type Lang } from '../i18n/core'
 
 export type Overlay = 'none' | 'truecolor' | 'ndvi' | 'imerg' | 'lst'
 export type Theme = 'light' | 'dark'
 
 interface Settings {
   theme: Theme
+  lang: Lang
   metric: MetricId
   overlay: Overlay
   overlayOpacity: number
@@ -18,6 +20,7 @@ interface Settings {
   favorites: string[]
   notify: boolean
   setTheme: (t: Theme) => void
+  setLang: (l: Lang) => void
   setMetric: (m: MetricId) => void
   setOverlay: (o: Overlay) => void
   setOverlayOpacity: (n: number) => void
@@ -42,6 +45,7 @@ export const useSettings = create<Settings>()(
   persist(
     (set) => ({
       theme: initialTheme(),
+      lang: detectLang(),
       metric: 'temp',
       overlay: 'none',
       overlayOpacity: 0.75,
@@ -57,6 +61,7 @@ export const useSettings = create<Settings>()(
         try { localStorage.setItem('lt-theme', theme) } catch { /* storage blocked */ }
         set({ theme })
       },
+      setLang: (lang) => set({ lang }),
       setMetric: (metric) => set({ metric }),
       setOverlay: (overlay) => set({ overlay }),
       setOverlayOpacity: (overlayOpacity) => set({ overlayOpacity }),
@@ -71,8 +76,8 @@ export const useSettings = create<Settings>()(
     {
       name: 'lt-settings',
       version: 1,
-      partialize: ({ metric, overlay, overlayOpacity, showRivers, showStations, refreshMinutes, compare, favorites, notify }) =>
-        ({ metric, overlay, overlayOpacity, showRivers, showStations, refreshMinutes, compare, favorites, notify }),
+      partialize: ({ lang, metric, overlay, overlayOpacity, showRivers, showStations, refreshMinutes, compare, favorites, notify }) =>
+        ({ lang, metric, overlay, overlayOpacity, showRivers, showStations, refreshMinutes, compare, favorites, notify }),
     },
   ),
 )
