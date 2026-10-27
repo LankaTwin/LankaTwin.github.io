@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom'
-import { CloudRain, Thermometer, Wind, Factory, Waves, ShieldCheck } from 'lucide-react'
+import { CloudLightning, CloudRain, Droplets, Thermometer, Wind, Factory, Waves, ShieldCheck } from 'lucide-react'
 import type { Alert, AlertKind } from '../lib/alerts'
 import { useT } from '../i18n/useT'
 
-const ICON: Record<AlertKind, typeof CloudRain> = { rain: CloudRain, heat: Thermometer, wind: Wind, air: Factory, river: Waves }
+export const ALERT_ICON: Record<AlertKind, typeof CloudRain> = { rain: CloudRain, flood: Droplets, storm: CloudLightning, heat: Thermometer, wind: Wind, air: Factory, river: Waves }
 
 export default function AlertList({ alerts, limit, compact }: { alerts: Alert[]; limit?: number; compact?: boolean }) {
   const { t } = useT()
@@ -19,7 +19,7 @@ export default function AlertList({ alerts, limit, compact }: { alerts: Alert[];
   return (
     <ul className="space-y-1.5">
       {shown.map((a) => {
-        const Icon = ICON[a.kind]
+        const Icon = ALERT_ICON[a.kind]
         const warn = a.level === 'warning'
         return (
           <li key={a.id}>

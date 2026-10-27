@@ -127,3 +127,19 @@ describe('time', () => {
     expect(addHours('2026-10-27T23:00', 2)).toBe('2026-10-28T01:00')
   })
 })
+
+describe('flood and storm signals', () => {
+  it('raises flood signals from the flood score', () => {
+    const watch = reading('colombo', {}, { flood: { score: 50, level: 'high', parts: { rain: 30, river: 15, terrain: 5 } } })
+    const warn = reading('galle', {}, { flood: { score: 70, level: 'very-high', parts: { rain: 40, river: 25, terrain: 5 } } })
+    const out = buildAlerts([watch, warn]).filter((x) => x.kind === 'flood')
+    expect(out.map((x) => [x.place, x.level])).toEqual([['Galle', 'warning'], ['Colombo', 'watch']])
+    expect(out[0].title).toBe('Very high flood risk')
+  })
+
+  it('raises thunderstorm signals, hail as a warning', () => {
+    expect(buildAlerts([reading('kandy', {}, { weatherCode: 95 })]).find((x) => x.kind === 'storm')?.level).toBe('watch')
+    expect(buildAlerts([reading('kandy', {}, { weatherCode: 99 })]).find((x) => x.kind === 'storm')?.level).toBe('warning')
+    expect(buildAlerts([reading('kandy', {}, { weatherCode: 63 })]).some((x) => x.kind === 'storm')).toBe(false)
+  })
+})

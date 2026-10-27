@@ -29,3 +29,17 @@ export const SCENES: Record<Zone | 'flood', string> = {
 
 /** Link-preview crawlers want a plain JPEG, not format negotiation. */
 export const OG_IMAGE = `${BASE}/f_jpg,q_auto/lankatwin/og-image`
+
+/**
+ * A remote image (here, Wikimedia Commons originals) delivered through Cloudinary's
+ * fetch type: resized, compressed and cached on its CDN. Needs "Fetched URL" allowed in
+ * the account's security settings; callers fall back to the original URL if it fails.
+ */
+export function cldFetch(url: string, transform = '') {
+  const t = ['f_auto', 'q_auto', transform].filter(Boolean).join(',')
+  return `https://res.cloudinary.com/${CLOUD}/image/fetch/${t}/${url}`
+}
+
+export function cldFetchSrcSet(url: string, widths = [480, 800, 1280, 1920]) {
+  return widths.map((w) => `${cldFetch(url, `c_limit,w_${w}`)} ${w}w`).join(', ')
+}

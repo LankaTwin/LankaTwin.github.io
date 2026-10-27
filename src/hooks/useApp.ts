@@ -4,6 +4,7 @@ import { tFor } from '../i18n/core'
 import { STATIONS } from '../lib/places'
 import { useSettings } from '../stores/settings'
 import { useNowcast, useRivers } from './useLiveData'
+import { useAlertLog } from '../stores/alertLog'
 
 /** Pass an already-translated title; with none, the app's own name in the interface language. */
 export function useTitle(title?: string) {
@@ -73,4 +74,49 @@ export function useSignalNotifications() {
       try { sessionStorage.setItem(SEEN_KEY, JSON.stringify([...seen, ...fresh.map((a) => `${a.id}:${a.level}`)])) } catch { /* storage blocked */ }
     }
   }, [alerts, notify, favorites, readings])
+}
+
+/** A short two-tone chime, made in the browser so there is no audio file to load. */
+export function chime() {
+  try {
+    const ctx = new AudioContext()
+    ;[880, 660].forEach((f, i) => {
+      const o = ctx.createOscillator()
+      const g = ctx.createGain()
+      o.frequency.value = f
+      g.gain.setValueAtTime(0.0001, ctx.currentTime + i * 0.22)
+      g.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + i * 0.22 + 0.02)
+      g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + i * 0.22 + 0.2)
+      o.connect(g).connect(ctx.destination)
+      o.start(ctx.currentTime + i * 0.22)
+      o.stop(ctx.currentTime + i * 0.22 + 0.22)
+    })
+    setTimeout(() => ctx.close(), 800)
+  } catch { /* audio unavailable or blocked until the user interacts */ }
+}
+
+/**
+ * Keeps the session's alert log in step with the live data on every page, and chimes
+ * (if switched on) when a new warning appears or a watch escalates to one.
+ */
+export function useAlertTracker() {
+  const { lang, alertSound } = useSettings()
+  const { readings } = useNowcast()
+  const { rivers } = useRivers()
+  const update = useAlertLog((s) => s.update)
+  const alerts = useMemo(() => buildAlerts(readings, rivers, lang), [readings, rivers, lang])
+  useEffect(() => {
+    if (!readings) return
+    const { added, escalated } = update(alerts)
+    if (alertSound && [...added, ...escalated].some((a) => a.level === 'warning')) chime()
+  }, [alerts]) // eslint-disable-line react-hooks/exhaustive-deps
+}
+
+/** Active signals from the log, for the header badge and banner. */
+export function useActiveSignals() {
+  const entries = useAlertLog((s) => s.entries)
+  return useMemo(() => {
+    const active = Object.values(entries).filter((e) => !e.clearedAt)
+    return { active, warnings: active.filter((e) => e.level === 'warning'), watches: active.filter((e) => e.level === 'watch') }
+  }, [entries])
 }
