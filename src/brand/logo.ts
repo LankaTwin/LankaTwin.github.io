@@ -1,6 +1,6 @@
-// The LankaTwin mark: Sri Lanka's coastline (Natural Earth 1:10m, public domain) on a lagoon
-// tile, a second "twin" contour offset behind it, the sun, and a live-data pulse over the
-// hill country. Plain strings so the app, the build-time pages and the icon script share it.
+// The LankaTwin (Lankan Technical Weather Information Network) mark: Sri Lanka's coastline
+// (Natural Earth 1:10m, public domain) on a lagoon tile, a second contour offset behind it, the
+// sun, and a live-data pulse over the hill country. Plain strings so the app, the build-time pages and the icon script share it.
 
 /** Island outlines in a box 55.71 wide and 100 high (north up, equirectangular at 7.8°N). */
 export const ISLAND_W = 55.71

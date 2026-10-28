@@ -135,7 +135,7 @@ export default function LivePage() {
           {!readings ? <Skeleton className="h-64" /> : log.length === 0 ? (
             <p className="rounded-lg bg-paddy-soft px-3 py-2.5 text-sm">{t('live.feedEmpty')}</p>
           ) : (
-            <ul className="max-h-[70vh] space-y-1.5 overflow-y-auto pr-1">
+            <ul className="relative max-h-[70vh] space-y-1.5 overflow-y-auto pr-1">
               {log.map((e) => <FeedItem key={e.id} e={e} fresh={e.firstSeen > openedAt + 1000} locale={locale} />)}
             </ul>
           )}

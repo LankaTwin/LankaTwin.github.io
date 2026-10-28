@@ -1,13 +1,14 @@
-# LankaTwin
+# LankaTwin — Lankan Technical Weather Information Network
 
-![LankaTwin — live weather, rivers and air for Sri Lanka](public/og-image.png)
+![LankaTwin — live weather, rivers, floods and air for Sri Lanka](public/og/home.jpg)
 
 **Live at [lankatwin.github.io](https://lankatwin.github.io/)**
 
 **A free, open-source window onto Sri Lanka's weather, rivers, air and land — running entirely in your browser.**
 
-LankaTwin is the public visualisation layer of a climate and resource digital twin for Sri Lanka. It pulls live, open data
-straight from the publishers into an interactive map and charts, with no server and no running cost on GitHub Pages.
+LankaTwin stands for **Lankan Technical Weather Information Network**: TWIN is short for Technical Weather Information Network.
+It pulls live, open data (forecast models, satellite imagery, Irrigation Department river gauges and air quality) straight from
+the publishers into an interactive map and charts, with no server and no running cost on GitHub Pages.
 
 ## What it does
 

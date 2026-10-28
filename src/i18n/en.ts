@@ -20,7 +20,7 @@ const en = {
   'layout.toDark': 'Switch to dark theme',
   'layout.language': 'Language',
   'layout.offline': 'You’re offline. Showing the last data saved on this device; it refreshes when you reconnect.',
-  'layout.footer': 'LankaTwin is an open-source, unofficial tool. For official warnings follow the Department of Meteorology and the Disaster Management Centre (hotline 117).',
+  'layout.footer': 'LankaTwin, the Lankan Technical Weather Information Network, is an open-source, unofficial tool. For official warnings follow the Department of Meteorology and the Disaster Management Centre (hotline 117).',
   'layout.source': 'Source on GitHub',
   'title.default': 'LankaTwin — live weather, rivers and air for Sri Lanka',
   'notFound.title': 'Page not found',
@@ -482,7 +482,7 @@ const en = {
 
   // ---- About
   'about.title': 'About LankaTwin',
-  'about.lead': 'LankaTwin is a free, open-source window onto Sri Lanka’s weather, rivers, air and land — a first, public layer of a digital twin of the island. It runs entirely in your browser, on GitHub Pages, and costs nothing to use or host.',
+  'about.lead': 'LankaTwin — the Lankan Technical Weather Information Network — is a free, open-source window onto Sri Lanka’s weather, rivers, air and land. It runs entirely in your browser, on GitHub Pages, and costs nothing to use or host.',
   'about.howTitle': 'How the numbers are made',
   'about.how': 'Each town on the map is a grid cell in a global model. Weather comes from Open-Meteo’s blend of national weather-service models; air quality from the Copernicus Atmosphere Monitoring Service; river flow from the Copernicus Global Flood Awareness System (GloFAS); the rainfall baseline from the ERA5 reanalysis; solar energy from NASA POWER; and satellite imagery from NASA’s GIBS.',
   'about.howRainTitle': 'Rain, last 24 h',
@@ -773,6 +773,9 @@ const en = {
   'share.floodsTitle': 'Sri Lanka flood risk now',
   'share.floodsText': '{n} towns at high flood risk or above; {g} river gauges at flood level',
   'share.spotText': '{lat}, {lon}: {m} m above sea level, flood risk {risk}',
+  'brand.fullName': 'Lankan Technical Weather Information Network',
+  'about.nameTitle': 'What the name means',
+  'about.name': 'LankaTwin stands for {full}. TWIN is short for Technical Weather Information Network: technical, because it is built from forecast models, satellite imagery and measured gauge data; weather information, because that is what it gathers and explains; and a network, because it links the readings of many agencies and sources across the island in one place.',
 } as const
 
 export type Key = keyof typeof en

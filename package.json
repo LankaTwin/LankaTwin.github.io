@@ -2,7 +2,7 @@
   "name": "lankatwin",
   "private": true,
   "version": "0.1.0",
-  "description": "Open-source, client-side environmental digital twin for Sri Lanka",
+  "description": "LankaTwin, the Lankan Technical Weather Information Network: open-source live weather, rivers, floods and air quality for Sri Lanka",
   "type": "module",
   "license": "MIT",
   "scripts": {

@@ -30,6 +30,14 @@ describe('page metadata', () => {
     for (const p of pages) expect(existsSync(`public${p.image}`), p.image).toBe(true)
   })
 
+  it('names the site by its full name in the structured data', () => {
+    const graph = pageMeta('/')!.jsonLd
+    for (const t of ['Organization', 'WebSite', 'WebApplication']) {
+      expect((graph.find((x) => x['@type'] === t) as Record<string, unknown>).alternateName, t).toBe('Lankan Technical Weather Information Network')
+    }
+    expect(pageMeta('/about')!.title).toContain('Lankan Technical Weather Information Network')
+  })
+
   it('ignores trailing slashes and leaves unknown paths unindexed', () => {
     expect(pageMeta('/floods/')?.path).toBe('/floods')
     expect(pageMeta('/station/nowhere')).toBeUndefined()

@@ -7,6 +7,8 @@ import { RIVER_POINTS, STATIONS, stationById, riverById, type RiverPoint, type S
 export const SITE = {
   url: 'https://lankatwin.github.io',
   name: 'LankaTwin',
+  /** What the name stands for: TWIN = Technical Weather Information Network. */
+  fullName: 'Lankan Technical Weather Information Network',
   tagline: 'Live weather, rivers, floods and air quality for Sri Lanka',
   repo: 'https://github.com/LankaTwin/LankaTwin.github.io',
   locale: 'en_LK',
@@ -38,6 +40,7 @@ const ORG = {
   '@type': 'Organization',
   '@id': `${SITE.url}/#org`,
   name: SITE.name,
+  alternateName: SITE.fullName,
   url: `${SITE.url}/`,
   logo: { '@type': 'ImageObject', url: `${SITE.url}/icon-512.png`, width: 512, height: 512 },
   sameAs: [SITE.repo],
@@ -47,6 +50,7 @@ const WEBSITE = {
   '@type': 'WebSite',
   '@id': `${SITE.url}/#website`,
   name: SITE.name,
+  alternateName: SITE.fullName,
   url: `${SITE.url}/`,
   description: SITE.tagline,
   inLanguage: ['en', 'si', 'ta'],
@@ -98,11 +102,12 @@ const S: Record<string, Section> = {
   '/': {
     title: 'LankaTwin — Sri Lanka weather, floods, rivers and air, live',
     h1: 'Sri Lanka, live',
-    description: 'Free live map of Sri Lanka: weather, rain, river gauges, flood risk, air quality and satellite views for every district, in English, Sinhala and Tamil.',
+    description: 'The Lankan Technical Weather Information Network: live weather, rain, river gauges, flood risk and air quality for every district of Sri Lanka.',
     image: '/og/home.jpg', changefreq: 'hourly', priority: 1, links: townLinks,
     ld: () => [{
       '@type': 'WebApplication',
       name: SITE.name,
+      alternateName: SITE.fullName,
       url: `${SITE.url}/`,
       applicationCategory: 'UtilitiesApplication',
       applicationSubCategory: 'Weather and flood monitoring',
@@ -183,9 +188,9 @@ const S: Record<string, Section> = {
     image: '/og/sources.jpg', changefreq: 'monthly', priority: 0.4,
   },
   '/about': {
-    title: 'About LankaTwin — an open-source environmental twin of Sri Lanka',
+    title: 'About LankaTwin — Lankan Technical Weather Information Network',
     h1: 'About LankaTwin',
-    description: 'How LankaTwin works, its limits, settings and languages, and how to contribute. Free and open source; official warnings come from DoM and the DMC.',
+    description: 'LankaTwin is the Lankan Technical Weather Information Network: how it works, its limits, languages and how to contribute. Free and open source.',
     image: '/og/about.jpg', changefreq: 'monthly', priority: 0.4,
   },
 }
@@ -338,7 +343,7 @@ export function bodyHtml(m: PageMeta) {
     ? `<nav aria-label="Breadcrumb"><ol>${m.breadcrumbs.map(([n, p]) => `<li><a href="${p}">${text(n)}</a></li>`).join('')}</ol></nav>`
     : ''
   return `<div class="lt-static">
-      <header><a href="/" class="lt-static-brand">LankaTwin</a></header>
+      <header><a href="/" class="lt-static-brand">LankaTwin</a> <span>· ${SITE.fullName}</span></header>
       <main>
         ${crumbs}
         <h1>${text(m.h1)}</h1>
