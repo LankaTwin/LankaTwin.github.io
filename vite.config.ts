@@ -68,6 +68,12 @@ export default defineConfig({
             options: { cacheName: 'lt-basemap', expiration: { maxEntries: 1500, maxAgeSeconds: 60 * 60 * 24 * 30 } },
           },
           {
+            // Landscape photos (public/photos): picked by screen width, so cached as they are used.
+            urlPattern: ({ sameOrigin, url }) => sameOrigin && url.pathname.startsWith('/photos/'),
+            handler: 'CacheFirst',
+            options: { cacheName: 'lt-scenes', expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 90 } },
+          },
+          {
             // Cloudinary URLs are versioned by their transformation; safe to keep a month.
             urlPattern: /^https:\/\/res\.cloudinary\.com\/.*/,
             handler: 'CacheFirst',

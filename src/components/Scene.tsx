@@ -1,11 +1,12 @@
 import { useState, type ReactNode } from 'react'
-import { cld, cldSrcSet, SCENES } from '../lib/cloudinary'
+import { SCENES, sceneSrc, sceneSrcSet } from '../lib/scenes'
 import { useT } from '../i18n/useT'
 import Landscape, { type Sky } from './Landscape'
 
 /**
- * A wide landscape image served from Cloudinary at the right size and format for the
- * screen, over a drawn illustration that shows while it loads or if it can't.
+ * A real photo of one of the island's landscapes (Wikimedia Commons, credited to its author),
+ * served as small WebP files sized for the screen. A tiny inlined preview shows at once, over
+ * a drawn illustration that stays if the photo can't load (offline, blocked).
  */
 export default function Scene({ id, sky, className = '', sizes = '(min-width: 1152px) 1120px, 100vw', children, caption = true, shade = true, label }: {
   id: keyof typeof SCENES
@@ -22,19 +23,19 @@ export default function Scene({ id, sky, className = '', sizes = '(min-width: 11
   const { t } = useT()
   const [state, setState] = useState<'loading' | 'ok' | 'error'>('loading')
   const zone = id === 'flood' ? 'plains' : id
+  const photo = SCENES[id]
   return (
     <figure className={`relative overflow-hidden bg-sunken ${className}`}>
       <Landscape zone={zone} sky={sky ?? (id === 'flood' ? 'rain' : 'day')} className="absolute inset-0 h-full w-full" />
-      {/* A ~1 KB blurred preview fills in first, then the full image fades over it. */}
-      {state === 'loading' && (
-        <img src={cld(SCENES[id], 'c_fill,w_48,e_blur:300,q_30')} alt="" aria-hidden decoding="async" className="absolute inset-0 h-full w-full scale-110 object-cover blur-md" />
+      {state !== 'error' && (
+        <img src={photo.lqip} alt="" aria-hidden className={`absolute inset-0 h-full w-full scale-110 object-cover blur-lg transition-opacity duration-500 ${state === 'ok' ? 'opacity-0' : 'opacity-100'}`} />
       )}
       {state !== 'error' && (
         <img
-          src={cld(SCENES[id], 'c_fill,w_1280')}
-          srcSet={cldSrcSet(SCENES[id])}
+          src={sceneSrc(id, 960)}
+          srcSet={sceneSrcSet(id)}
           sizes={sizes}
-          alt={label ?? ""}
+          alt={label ?? ''}
           loading="lazy"
           decoding="async"
           onLoad={() => setState('ok')}
@@ -44,7 +45,13 @@ export default function Scene({ id, sky, className = '', sizes = '(min-width: 11
       )}
       {shade && <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />}
       {children}
-      {caption && state === 'ok' && <figcaption className="absolute right-2 bottom-1.5 text-[10px] text-white/75">{t('scene.ai')}</figcaption>}
+      {caption && state === 'ok' && (
+        <figcaption className="absolute right-2 bottom-1.5 max-w-[70%] truncate text-right text-[10px] text-white/80">
+          <a href={photo.page} className="hover:underline" target="_blank" rel="noreferrer" title={photo.title}>
+            {t('place.photoCredit')}: {photo.author} · {photo.license} · Wikimedia Commons
+          </a>
+        </figcaption>
+      )}
     </figure>
   )
 }

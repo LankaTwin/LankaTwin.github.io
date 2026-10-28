@@ -19,7 +19,7 @@ the publishers into an interactive map and charts, with no server and no running
 - **Place pages**: 24 h / 7 d / 30 d charts for temperature, rain, humidity, wind, air quality and soil moisture; a 7-day forecast; this month's rain against the past decade (ERA5); and solar energy received (NASA POWER).
 - **Compare** up to five places on one chart; **signals** for heavy rain, heat stress, strong gusts, poor air and rising rivers.
 - **Search** (press `/` or `Ctrl K`) in English, Sinhala or Tamil; **Near me** finds your closest town; **star** places to keep them on top.
-- **Images**: a photo of every town from Wikipedia (credited to its Commons author), illustrated landscapes when offline, weather icons, and a daily MODIS satellite image of the whole island.
+- **Images**: a photo of every town from Wikipedia (credited to its Commons author), real landscape photos from Wikimedia Commons served as small WebP files (`public/photos`, built by `scripts/photos.py`), drawn landscapes when offline, weather icons, and a daily MODIS satellite image of the whole island.
 - **Forecast detail**: next-24-hour strip, 7-day outlook with UV and gusts, the current monsoon season, and the rivers near each town.
 - **Share and embed**: a share menu on every key screen (WhatsApp, Facebook, X, Telegram, Viber, LinkedIn, email, SMS, copy link or copy a ready-made summary; the system share sheet on phones), and a live `<iframe>` widget for other sites (`/embed/<place>`).
 - **Search-friendly**: real URLs, with an HTML file per page (11 sections, 26 towns, 14 river points and every river gauge) carrying its own title, description, canonical link, Open Graph and Twitter tags, share image and schema.org data (WebSite, Organization, WebApplication, Place, Dataset, BreadcrumbList); `sitemap.xml` and `robots.txt` are generated with the build.
@@ -65,9 +65,9 @@ Vite · React 19 · TypeScript · Tailwind CSS 4 · MapLibre GL · Apache EChart
 | [NASA POWER](https://power.larc.nasa.gov) | Daily solar irradiance |
 | [NASA GIBS](https://nasa-gibs.github.io/gibs-api-docs/) | Satellite overlays |
 | [CARTO](https://carto.com/basemaps) / OpenStreetMap | Basemap |
-| [Wikipedia](https://en.wikipedia.org) / [Wikimedia Commons](https://commons.wikimedia.org) | Place photos, credited per image |
+| [Wikipedia](https://en.wikipedia.org) / [Wikimedia Commons](https://commons.wikimedia.org) | Place and landscape photos, credited per image |
 | [Open-Meteo Elevation](https://open-meteo.com/en/docs/elevation-api) (Copernicus DEM GLO-90) | Elevation of towns and tapped spots |
-| [Cloudinary](https://cloudinary.com) | Hosting and on-the-fly optimisation of the landscape scenes and link-preview image, and fetch delivery of town photos (`src/lib/cloudinary.ts`) |
+| [Cloudinary](https://cloudinary.com) | Hosting of the link-preview image and fetch delivery of town photos (`src/lib/cloudinary.ts`) |
 
 Full licences and attribution are on the in-app **Sources** page. National sources (Meteorology, Irrigation, DMC, data.gov.lk) are
 planned through scheduled snapshots — see [`docs/DATA_CONNECTORS.md`](docs/DATA_CONNECTORS.md).

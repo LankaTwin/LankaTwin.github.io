@@ -55,8 +55,8 @@ export const SOURCES: DataSource[] = [
   },
   {
     id: 'cloudinary', name: 'Image hosting', provider: 'Cloudinary', status: 'imagery',
-    provides: 'Hosting and on-the-fly resizing and compression of the app’s images (AVIF/WebP where supported)', refresh: 'Global CDN',
-    resolution: 'Sized per screen', license: 'Landscape scenes are AI-generated for LankaTwin', url: 'https://cloudinary.com',
+    provides: 'Resizing and compression of town photos from Wikimedia Commons (AVIF/WebP where supported), when the account allows it', refresh: 'Global CDN',
+    resolution: 'Sized per screen', license: 'Photos keep their own licences and credits', url: 'https://cloudinary.com',
   },
   {
     id: 'basemap', name: 'Basemap', provider: 'CARTO / OpenStreetMap contributors', status: 'imagery',
@@ -65,7 +65,7 @@ export const SOURCES: DataSource[] = [
   },
   {
     id: 'photos', name: 'Place photos', provider: 'Wikipedia / Wikimedia Commons', status: 'imagery',
-    provides: 'The lead photo of each town’s Wikipedia article, with author and licence from Commons', refresh: 'Cached for a week',
+    provides: 'The lead photo of each town’s Wikipedia article, and landscape photos of the coast, hills, plains and a flood, with author and licence from Commons', refresh: 'Cached for a week',
     resolution: 'Up to 1280 px', license: 'Per image, mostly CC BY-SA; credited on each photo', url: 'https://commons.wikimedia.org',
   },
   {
