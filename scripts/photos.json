@@ -1,0 +1,42 @@
+{
+  "coast": {
+    "file": "coast.jpg",
+    "title": "Goyambokka Beach, Tangalle, on Sri Lanka's south coast",
+    "author": "Satdeep Gill",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Goyambokka_Beach,_Tangalle,_Sri_Lanka.jpg"
+  },
+  "hills": {
+    "file": "hills.jpg",
+    "title": "Tea plantation (Dambatenne estates) at about 1,800 m in Haputale, in the hill country",
+    "author": "Adbar",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Tea_plantation_Haputale.jpg",
+    "focusY": 0.42
+  },
+  "plains": {
+    "file": "plains.jpg",
+    "title": "Paddy field below a rocky mountain in Sri Lanka's Eastern Province",
+    "author": "Thushari Pahalage",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Paddy_field_with_roaring_mountain_scenery,_Eastern_Province,Sri_Lanka.jpg",
+    "focusY": 0.58
+  },
+  "flood": {
+    "file": "flood.jpg",
+    "title": "Flood extent along the Kelani Ganga between Colombo and Kaduwela on 22 May 2016, mapped from Sentinel-1 radar (bright blue: flood water)",
+    "author": "European Space Agency",
+    "license": "CC BY-SA 3.0 IGO",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/igo/",
+    "page": "https://commons.wikimedia.org/wiki/File:Flood_map,_western_Sri_Lanka_ESA360995.jpg",
+    "box": [
+      968,
+      620,
+      1918,
+      1154
+    ]
+  }
+}

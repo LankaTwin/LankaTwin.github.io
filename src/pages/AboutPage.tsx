@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useSettings } from '../stores/settings'
 import Scene from '../components/Scene'
+import { SCENES } from '../lib/scenes'
 import { REPO_URL } from '../components/Layout'
 import { useTitle } from '../hooks/useApp'
 import { LANGS, rich, type Key, type Lang } from '../i18n/core'
@@ -83,6 +84,13 @@ export default function AboutPage() {
 
       <h2>{t('about.imagesTitle')}</h2>
       <p>{t('about.images')}</p>
+      <ul className="text-sm">
+        {Object.values(SCENES).map((p) => (
+          <li key={p.page}>
+            <a href={p.page} target="_blank" rel="noreferrer">{p.title}</a> — {p.author}, <a href={p.licenseUrl} target="_blank" rel="noreferrer">{p.license}</a>
+          </li>
+        ))}
+      </ul>
 
       <h2>{t('about.languageTitle')}</h2>
       <p>{t('about.language')}</p>
