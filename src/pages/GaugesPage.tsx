@@ -221,7 +221,7 @@ function GaugeList({ gauges, tab, filter, selected, onPick }: { gauges: GaugeSta
     : gauges.filter((g) => g.peak?.level === tab).sort((a, b) => b.peak!.obs.time - a.peak!.obs.time)
   if (!rows.length) return <p className="rounded-lg bg-paddy-soft px-3 py-2.5 text-sm">{t(tab === 'hourly' ? 'gauges.emptyHourly' : 'gauges.emptyLevel', { level: tab === 'hourly' ? '' : t(`gaugeLevel.${tab}` as Key) })}</p>
   return (
-    <ul className="max-h-[60vh] space-y-1 overflow-y-auto pr-1">
+    <ul className="relative max-h-[60vh] space-y-1 overflow-y-auto pr-1">
       {rows.map((g) => {
         const obs = tab === 'hourly' ? g.latest! : g.peak!.obs
         const lv = tab === 'hourly' ? g.level : g.peak!.level

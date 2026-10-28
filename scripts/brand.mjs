@@ -156,8 +156,9 @@ body{width:1200px;height:630px;font-family:SG,'DejaVu Sans',sans-serif;backgroun
 .left{position:absolute;left:64px;top:52px;width:640px;bottom:40px;display:flex;flex-direction:column}
 .brand{display:flex;align-items:center;gap:16px}
 .brand svg{width:64px;height:64px}
-.wm{font-size:40px;font-weight:800;letter-spacing:-1px}.wm b{color:${BRAND.lagoon};font-weight:800}
-.kicker{margin-top:38px;font-size:22px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:${BRAND.lagoon}}
+.wm{font-size:40px;font-weight:800;letter-spacing:-1px;line-height:1}.wm b{color:${BRAND.lagoon};font-weight:800}
+.full{display:block;margin-top:6px;font-size:15px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#5b6f74}
+.kicker{margin-top:30px;font-size:22px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:${BRAND.lagoon}}
 h1{margin-top:8px;font-size:${title.length > 30 ? 54 : 66}px;line-height:1.04;font-weight:800;letter-spacing:-1.5px}
 p{margin-top:18px;font-size:25px;line-height:1.35;color:#33494f;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .chips{display:flex;gap:10px;flex-wrap:wrap;margin-top:auto;margin-bottom:30px}
@@ -169,7 +170,7 @@ p{margin-top:18px;font-size:25px;line-height:1.35;color:#33494f;display:-webkit-
 .land{position:absolute;left:0;right:0;bottom:0;width:430px;height:96px;opacity:.28;mix-blend-mode:screen}
 </style></head><body>
 <div class="left">
-  <div class="brand">${markSvg({ id: 'og', detail: true })}<span class="wm">Lanka<b>Twin</b></span></div>
+  <div class="brand">${markSvg({ id: 'og', detail: true })}<span><span class="wm">Lanka<b>Twin</b></span><span class="full">${esc(seo.SITE.fullName)}</span></span></div>
   ${kicker ? `<div class="kicker">${esc(kicker)}</div>` : ''}
   <h1>${esc(title)}</h1>
   <p>${esc(text)}</p>

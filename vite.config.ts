@@ -16,9 +16,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'favicon.ico', 'apple-touch-icon.png'],
       manifest: {
-        name: 'LankaTwin — Sri Lanka environmental twin',
+        name: 'LankaTwin — Lankan Technical Weather Information Network',
         short_name: 'LankaTwin',
-        description: 'Live weather, rivers, air quality and satellite views for Sri Lanka.',
+        description: 'The Lankan Technical Weather Information Network: live weather, rivers, floods, river gauges, air quality and satellite views for Sri Lanka.',
         theme_color: '#0E6E78',
         background_color: '#F2F5F4',
         display: 'standalone',

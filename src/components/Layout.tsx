@@ -211,9 +211,11 @@ export default function Layout() {
     <div className={`flex flex-col ${isMap ? 'h-dvh' : 'min-h-dvh'}`}>
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-surface focus:p-2">{t('layout.skip')}</a>
       <header className="z-20 flex shrink-0 items-center gap-1.5 border-b border-line bg-surface px-3 py-2 pt-[max(0.5rem,env(safe-area-inset-top))] sm:gap-3 sm:px-4">
-        <NavLink to="/" className="flex items-center gap-2 pr-1" aria-label={t('layout.home')}>
+        <NavLink to="/" className="flex items-center gap-2 pr-1" aria-label={t('layout.home')} title={`LankaTwin — ${t('brand.fullName')}`}>
           <Mark className="size-8" />
-          <Wordmark className="hidden text-[18px] min-[400px]:inline" />
+          <Wordmark className="hidden text-[18px] min-[400px]:inline 2xl:hidden" />
+          {/* The full name fits beside the nav only on wide screens. */}
+          <Wordmark className="hidden text-[18px] 2xl:flex" full={t('brand.fullName')} />
         </NavLink>
         <div className="flex-1 lg:hidden" />
         <nav aria-label={t('layout.mainNav')} className="-mx-1 hidden min-w-0 flex-1 gap-0.5 overflow-x-auto [scrollbar-width:none] lg:flex">

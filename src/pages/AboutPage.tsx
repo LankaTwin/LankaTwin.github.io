@@ -47,6 +47,9 @@ export default function AboutPage() {
       <h1 className="mb-3 text-3xl font-extrabold tracking-tight">{t('about.title')}</h1>
       <p className="text-lg">{t('about.lead')}</p>
 
+      <h2>{t('about.nameTitle')}</h2>
+      <p>{rich(t('about.name'), { full: <b>{t('brand.fullName')}</b> })}</p>
+
       <h2>{t('about.howTitle')}</h2>
       <p>{t('about.how')}</p>
       <ul>

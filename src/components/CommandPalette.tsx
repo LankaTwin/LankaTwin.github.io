@@ -69,7 +69,7 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
           />
           <kbd className="rounded border border-line px-1.5 text-[11px] text-muted">Esc</kbd>
         </div>
-        <ul id="lt-search-results" role="listbox" className="max-h-[50vh] overflow-y-auto p-1.5">
+        <ul id="lt-search-results" role="listbox" className="relative max-h-[50vh] overflow-y-auto p-1.5">
           {results.length === 0 && <li className="px-3 py-6 text-center text-sm text-muted">{t('search.none', { q })}</li>}
           {results.map((r, k) => {
             const Icon = ICON[r.kind]

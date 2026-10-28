@@ -84,7 +84,9 @@ export default function Dashboard() {
   const none = !spot && !selStation && !selRiver && !selGauge
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto lg:flex-row lg:overflow-hidden">
+    // Scroll containers are positioned so absolutely placed descendants (screen-reader labels)
+    // stay inside them; otherwise those escape the clipping and stretch the whole page.
+    <div className="relative flex h-full flex-col overflow-y-auto lg:flex-row lg:overflow-hidden">
       <div className="relative h-[62vh] shrink-0 lg:h-auto lg:flex-1">
         <MapView key={lang} readings={readings} rivers={rivers} gauges={gauges} selected={sel} onSelect={select} onPick={pick} picked={spot} focus={focus} userLocation={me} className="absolute inset-0" />
         <MetricBar />
@@ -105,7 +107,7 @@ export default function Dashboard() {
         )}
       </div>
 
-      <aside className="border-line bg-canvas lg:w-[392px] xl:w-[420px] 2xl:w-[460px] lg:shrink-0 lg:overflow-y-auto lg:border-l" aria-label={t('dash.details')}>
+      <aside className="relative border-line bg-canvas lg:w-[392px] xl:w-[420px] 2xl:w-[460px] lg:shrink-0 lg:overflow-y-auto lg:border-l" aria-label={t('dash.details')}>
         <div className="space-y-4 p-4">
           {weather.error && <SourceProblem error={weather.error} onRetry={() => weather.refetch()} />}
           {air.error && !weather.error && <SourceProblem error={air.error} onRetry={() => air.refetch()} />}
