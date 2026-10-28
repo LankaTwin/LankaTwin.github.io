@@ -268,15 +268,23 @@ export default function MapView({ readings, rivers, gauges, force, selected, onS
       ['lt-basins', basinsGeo.data, showBasins],
       ['lt-riverlines', riversGeo.data, showRiverLines],
     ]
+    // Flood areas: a lighter, brighter blue on the dark basemap so they stand apart from rivers.
+    const flood = theme === 'dark'
+      ? { 'fill-color': '#7cc4ff', 'fill-opacity': 0.5, 'fill-outline-color': '#cfe8ff' }
+      : { 'fill-color': '#1f78d1', 'fill-opacity': 0.45, 'fill-outline-color': '#0b4f94' }
     const apply = () => {
       const firstSymbol = m.getStyle().layers?.find((l) => l.type === 'symbol')?.id
       for (const [id, fc, on] of layers) {
         const data = on && fc ? fc : empty
         const src = m.getSource(id) as maplibregl.GeoJSONSource | undefined
-        if (src) { src.setData(data); continue }
+        if (src) {
+          src.setData(data)
+          if (id === 'lt-floodareas') for (const k of Object.keys(flood) as (keyof typeof flood)[]) m.setPaintProperty(id, k, flood[k])
+          continue
+        }
         m.addSource(id, { type: 'geojson', data, attribution: 'Irrigation Department, Sri Lanka' })
         if (id === 'lt-floodareas') {
-          m.addLayer({ id, type: 'fill', source: id, paint: { 'fill-color': '#1f78d1', 'fill-opacity': 0.45, 'fill-outline-color': '#0b4f94' } }, firstSymbol)
+          m.addLayer({ id, type: 'fill', source: id, paint: flood }, firstSymbol)
         } else if (id === 'lt-basins') {
           m.addLayer({ id: `${id}-fill`, type: 'fill', source: id, paint: { 'fill-color': '#0e7c86', 'fill-opacity': 0.04 } }, firstSymbol)
           m.addLayer({ id, type: 'line', source: id, paint: { 'line-color': '#0e7c86', 'line-width': 1, 'line-opacity': 0.7 } }, firstSymbol)
