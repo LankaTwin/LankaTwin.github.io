@@ -21,10 +21,10 @@ const NAV: { to: string; label: Key; end?: boolean; extra?: boolean }[] = [
   { to: '/gauges', label: 'nav.gauges' },
   { to: '/rivers', label: 'nav.rivers' },
   { to: '/air', label: 'nav.air' },
+  { to: '/developers', label: 'nav.developers' },
   { to: '/compare', label: 'nav.compare', extra: true },
   { to: '/alerts', label: 'nav.signals', extra: true },
   { to: '/sources', label: 'nav.sources', extra: true },
-  { to: '/developers', label: 'nav.developers', extra: true },
   { to: '/about', label: 'nav.about', extra: true },
 ]
 
@@ -273,7 +273,12 @@ export default function Layout() {
         <footer className="border-t border-line px-4 py-5 text-xs text-muted">
           <div className="mx-auto flex max-w-6xl flex-wrap justify-between gap-2">
             <span>{t('layout.footer')}</span>
-            <a className="inline-block py-1 underline" href={REPO_URL}>{t('layout.source')}</a>
+            <nav aria-label={t('layout.footerNav')} className="flex flex-wrap gap-x-4">
+              <NavLink className="inline-block py-1 underline" to="/developers">{t('layout.apiDocs')}</NavLink>
+              <a className="inline-block py-1 underline" href="/api/v1/openapi.json">OpenAPI</a>
+              <a className="inline-block py-1 underline" href="/api/v1/status.json">{t('layout.apiStatus')}</a>
+              <a className="inline-block py-1 underline" href={REPO_URL}>{t('layout.source')}</a>
+            </nav>
           </div>
         </footer>
       )}
