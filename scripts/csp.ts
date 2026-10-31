@@ -51,7 +51,7 @@ export function cspFor(inlineScripts: string[]) {
 /** Bodies of classic inline <script> tags (not src=, not JSON data blocks). */
 export function inlineScripts(html: string) {
   const out: string[] = []
-  for (const m of html.matchAll(/<script(\s[^>]*)?>([\s\S]*?)<\/script>/gi)) {
+  for (const m of html.matchAll(/<script(\s[^>]*)?>([\s\S]*?)<\/script\s*>/gi)) {
     const attrs = m[1] ?? ''
     if (/\bsrc\s*=/i.test(attrs)) continue
     const type = /\btype\s*=\s*["']?([^"'\s>]+)/i.exec(attrs)?.[1]?.toLowerCase()

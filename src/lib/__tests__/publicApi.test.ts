@@ -182,8 +182,8 @@ describe('API catalogue and OpenAPI', () => {
 
 describe('Content Security Policy', () => {
   it('hashes classic inline scripts only', () => {
-    const html = `<script>a()</script><script type="application/ld+json">{"x":1}</script><script src="/x.js"></script><script type="module">b()</script>`
-    expect(inlineScripts(html)).toEqual(['a()', 'b()'])
+    const html = `<script>a()</script><script type="application/ld+json">{"x":1}</script><script src="/x.js"></script><script type="module">b()</script><script>c()</script >`
+    expect(inlineScripts(html)).toEqual(['a()', 'b()', 'c()'])
     const policy = cspFor(['a()'])
     const scriptSrc = policy.split('; ').find((d) => d.startsWith('script-src'))!
     expect(scriptSrc).toMatch(/^script-src 'self' 'sha256-[A-Za-z0-9+/]+=*'$/)

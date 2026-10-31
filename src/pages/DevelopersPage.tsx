@@ -12,6 +12,7 @@ import { useT } from '../i18n/useT'
 const BASE = `${SITE.url}${API_BASE_PATH}`
 /** Files are fetched from the same origin the page runs on, so previews of a branch try their own build. */
 const local = (file: string) => `${API_BASE_PATH}/${file}`
+const SAFE_ID = /^[a-z0-9-]{1,80}$/
 
 /** `code` spans in the catalogue text, as React nodes (never as HTML). */
 function Md({ text }: { text: string }) {
@@ -135,7 +136,7 @@ function useIds(kind?: ParamKind) {
       const res = await fetch(local('gauges.json'), { signal })
       if (!res.ok) throw new Error(String(res.status))
       const body = (await res.json()) as { data?: { gauges?: { id: string; name: string }[] } }
-      return body.data?.gauges?.map((g) => ({ id: g.id, label: g.name })) ?? []
+      return (body.data?.gauges ?? []).filter((g) => typeof g.id === 'string' && SAFE_ID.test(g.id)).map((g) => ({ id: g.id, label: String(g.name) }))
     },
     staleTime: 10 * 60_000,
   })
@@ -155,7 +156,8 @@ function EndpointCard({ e }: { e: Endpoint }) {
   const [format, setFormat] = useState<Format>(e.formats[0])
   const [res, setRes] = useState<{ status: number; ms: number; size: number; body: string; type: string } | { error: string }>()
   const [busy, setBusy] = useState(false)
-  const chosen = e.param ? (id ?? ids[0]?.id) : undefined
+  // Only ids from the known lists ever reach a URL.
+  const chosen = e.param ? (ids.find((x) => x.id === id) ?? ids[0])?.id : undefined
   const file = fileFor(e, format, chosen)
   const url = `${BASE}/${file}`
 

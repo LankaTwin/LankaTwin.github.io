@@ -6,7 +6,7 @@
 // A feed that fails doesn't blank the API: files that depend on it are carried over from the
 // live site, flagged `stale: true`, and status.json says which feed failed and why.
 import { mkdirSync, writeFileSync } from 'node:fs'
-import { dirname, join } from 'node:path'
+import { dirname, join, resolve, sep } from 'node:path'
 import { createServer, type Plugin, type ResolvedConfig } from 'vite'
 
 type Api = typeof import('../src/lib/api.ts')
@@ -76,7 +76,9 @@ export default function staticApi(opts: { offline?: boolean } = {}): Plugin {
       const now = new Date()
       const written: string[] = []
       const write = (file: string, body: string) => {
-        const p = join(out, file)
+        // Some names come from upstream data (gauge ids): only plain slugs, and never outside out/.
+        const p = resolve(out, file)
+        if (!/^[a-z0-9-]+(\/[a-z0-9-]+)?(\.[a-z]{2,3})?\.[a-z]{3,7}$/.test(file) || !p.startsWith(resolve(out) + sep)) throw new Error(`[api] refusing to write ${JSON.stringify(file)}`)
         mkdirSync(dirname(p), { recursive: true })
         writeFileSync(p, body)
         written.push(file)
