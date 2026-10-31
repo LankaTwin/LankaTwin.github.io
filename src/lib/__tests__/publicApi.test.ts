@@ -9,7 +9,7 @@ import {
   placeDetail, riverDetail, snapshotOf, toCsv, weatherOf,
 } from '../publicApi'
 import { buildReadings, buildRivers } from '../readings'
-import { cspFor, CSP_HOSTS, inlineScripts } from '../../../scripts/csp'
+import { cspFor, CSP_HOSTS, INLINE_SCRIPTS, withInlineScripts } from '../../../scripts/csp'
 import { sanitizeSettings } from '../../stores/settings'
 
 const SITE = 'https://lankatwin.github.io'
@@ -181,9 +181,16 @@ describe('API catalogue and OpenAPI', () => {
 })
 
 describe('Content Security Policy', () => {
-  it('hashes classic inline scripts only', () => {
-    const html = `<script>a()</script><script type="application/ld+json">{"x":1}</script><script src="/x.js"></script><script type="module">b()</script><script>c()</script >`
-    expect(inlineScripts(html)).toEqual(['a()', 'b()', 'c()'])
+  it('puts the known inline scripts in place and refuses unknown ones', () => {
+    const page = '<head><!--inline:head--></head><body><!--inline:splash--><script type="application/ld+json">{}</script><script src="/x.js"></script></body>'
+    const html = withInlineScripts(page)
+    expect(html).toContain(`<script>${INLINE_SCRIPTS.head}</script>`)
+    expect(html).toContain(`<script>${INLINE_SCRIPTS.splash}</script>`)
+    expect(() => withInlineScripts(page.replace('<!--inline:splash-->', ''))).toThrow(/lost/)
+    expect(() => withInlineScripts(page + '<script>evil()</script>')).toThrow(/doesn't know/)
+  })
+
+  it('allows inline scripts by hash only', () => {
     const policy = cspFor(['a()'])
     const scriptSrc = policy.split('; ').find((d) => d.startsWith('script-src'))!
     expect(scriptSrc).toMatch(/^script-src 'self' 'sha256-[A-Za-z0-9+/]+=*'$/)

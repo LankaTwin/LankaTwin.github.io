@@ -48,16 +48,33 @@ export function cspFor(inlineScripts: string[]) {
   ].join('; ')
 }
 
-/** Bodies of classic inline <script> tags (not src=, not JSON data blocks). */
-export function inlineScripts(html: string) {
-  const out: string[] = []
-  for (const m of html.matchAll(/<script(\s[^>]*)?>([\s\S]*?)<\/script\s*>/gi)) {
-    const attrs = m[1] ?? ''
-    if (/\bsrc\s*=/i.test(attrs)) continue
-    const type = /\btype\s*=\s*["']?([^"'\s>]+)/i.exec(attrs)?.[1]?.toLowerCase()
-    if (type && type !== 'text/javascript' && type !== 'module') continue
-    out.push(m[2])
+/**
+ * The page's only inline scripts. They live here, not in index.html, so the policy hashes these
+ * exact strings and the build never has to parse HTML to find them. index.html marks where each
+ * goes with <!--inline:name-->.
+ */
+export const INLINE_SCRIPTS = {
+  head: `
+      // Old links used the hash (#/station/kandy): move them to the real path before anything renders.
+      if (location.hash.indexOf('#/') === 0) history.replaceState(null, '', location.hash.slice(1))
+      try { var t = localStorage.getItem('lt-theme'); if (t === 'dark' || (!t && matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark') } catch (e) {}
+      // Widgets embedded on other sites skip the splash.
+      if (location.pathname.indexOf('/embed/') === 0) document.documentElement.classList.add('lt-embed')
+    `,
+  // The splash goes away after 10 s whatever happens (src/main.tsx removes it sooner).
+  splash: `setTimeout(function () { var s = document.getElementById('lt-splash'); if (s) s.classList.add('lt-done') }, 10000)`,
+}
+
+/** Puts the inline scripts in place; fails if a marker is missing or another bare <script> appeared. */
+export function withInlineScripts(html: string) {
+  let out = html
+  for (const [name, code] of Object.entries(INLINE_SCRIPTS)) {
+    const marker = `<!--inline:${name}-->`
+    if (!out.includes(marker)) throw new Error(`[csp] index.html lost ${marker}`)
+    out = out.replace(marker, () => `<script>${code}</script>`)
   }
+  const bare = out.split('<script>').length - 1
+  if (bare !== Object.keys(INLINE_SCRIPTS).length) throw new Error('[csp] index.html has an inline <script> the policy doesn\'t know; add it to INLINE_SCRIPTS')
   return out
 }
 
@@ -77,15 +94,17 @@ export function securityTxt(site: string, now = new Date()) {
 export default function csp(site = 'https://lankatwin.github.io'): Plugin {
   return {
     name: 'lankatwin-csp',
-    apply: 'build',
     enforce: 'post',
     generateBundle() {
       this.emitFile({ type: 'asset', fileName: '.well-known/security.txt', source: securityTxt(site) })
     },
     transformIndexHtml: {
       order: 'post',
-      handler(html) {
-        const policy = cspFor(inlineScripts(html))
+      handler(source, ctx) {
+        const html = withInlineScripts(source)
+        // The dev server injects its own scripts; the policy is for the built site only.
+        if (ctx.server) return html
+        const policy = cspFor(Object.values(INLINE_SCRIPTS))
         const tags = `<meta http-equiv="Content-Security-Policy" content="${policy}" />\n    <meta name="referrer" content="strict-origin-when-cross-origin" />`
         // Right after <meta charset>, so the policy covers everything that follows.
         if (!/<meta charset="UTF-8" \/>/.test(html)) throw new Error('[csp] index.html lost its <meta charset>')
