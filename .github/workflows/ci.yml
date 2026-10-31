@@ -47,7 +47,9 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: 22
+          # npm 11 (Node 24) reads the registry's signing keys from Sigstore's trust root as
+          # well; npm 10 misses newer attestation keys (EMISSINGSIGNATUREKEY on magic-string).
+          node-version: 24
           cache: npm
       - run: npm ci --ignore-scripts
       # Registry signatures and provenance of every installed package.
