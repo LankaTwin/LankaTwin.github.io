@@ -328,13 +328,15 @@ function DailyStrip({ data }: { data?: Wx }) {
   const sun = (k: string, i: number) => String((data.daily?.[k] as string[] | undefined)?.[start + i] ?? '').slice(11, 16)
   return (
     <section aria-label={t('place.daily')} className="overflow-x-auto rounded-xl border border-line bg-surface">
-      <ol className="grid min-w-[640px] grid-cols-7 divide-x divide-line">
+      {/* Scrolls sideways on phones; each day lays itself out by its own width (container queries). */}
+      <ol className="grid min-w-[728px] grid-cols-7 divide-x divide-line">
         {days.map((d, i) => (
-          <li key={d} className="p-3 text-sm">
+          <li key={d} className="@container min-w-0 p-3 text-sm">
             <div className="font-semibold">{i === 0 ? t('common.today') : dayName(d, locale)} <span className="font-normal text-muted">{dayMonth(d, locale)}</span></div>
-            <div className="mt-1 flex h-12 items-center gap-1.5">
+            {/* Icon above its words in a narrow day, beside them where there's room. */}
+            <div className="mt-1 flex min-h-12 flex-col items-start gap-0.5 @min-[8rem]:flex-row @min-[8rem]:items-center @min-[8rem]:gap-1.5">
               <WeatherIcon code={v('weather_code', i)} className="size-9 shrink-0" />
-              <span className="text-xs leading-tight text-muted">{weatherText(v('weather_code', i), t)}</span>
+              <span className="max-w-full text-xs leading-tight break-words text-muted">{weatherText(v('weather_code', i), t)}</span>
             </div>
             <div className="text-lg font-bold">{fmt(v('temperature_2m_max', i))}° <span className="text-sm font-medium text-muted">{fmt(v('temperature_2m_min', i))}°</span></div>
             <div className="text-xs"><span className="font-semibold text-lagoon">{fmt(v('precipitation_sum', i), 1)} mm</span> <span className="text-muted">· {fmt(v('precipitation_probability_max', i))}%</span></div>
