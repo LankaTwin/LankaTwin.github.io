@@ -33,7 +33,8 @@ jobs:
       - run: npm test
       - run: npm run build
       - name: API build summary
-        run: node -e "const s=require('./dist/api/v1/status.json'); console.log(s.ok ? 'all feeds OK' : 'failed feeds: ' + s.feeds.filter(f=>!f.ok).map(f=>f.id+' ('+f.error+')').join(', ')); console.log('carried over:', s.carried_over.length)"
+        run: |
+          node -e "const s=require('./dist/api/v1/status.json'); console.log(s.ok ? 'all feeds OK' : 'failed feeds: ' + s.feeds.filter(f=>!f.ok).map(f=>f.id+' ('+f.error+')').join(', ')); console.log('carried over:', s.carried_over.length)"
       - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1
         with:
           path: dist
