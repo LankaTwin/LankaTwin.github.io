@@ -22,7 +22,7 @@ the publishers into an interactive map and charts, with no server and no running
 - **Images**: a photo of every town from Wikipedia (credited to its Commons author), real landscape photos from Wikimedia Commons served as small WebP files (`public/photos`, built by `scripts/photos.py`), drawn landscapes when offline, weather icons, and a daily MODIS satellite image of the whole island.
 - **Forecast detail**: next-24-hour strip, 7-day outlook with UV and gusts, the current monsoon season, and the rivers near each town.
 - **Share and embed**: a share menu on every key screen (WhatsApp, Facebook, X, Telegram, Viber, LinkedIn, email, SMS, copy link or copy a ready-made summary; the system share sheet on phones), and a live `<iframe>` widget for other sites (`/embed/<place>`).
-- **Search-friendly**: real URLs, with an HTML file per page (11 sections, 26 towns, 14 river points and every river gauge) carrying its own title, description, canonical link, Open Graph and Twitter tags, share image and schema.org data (WebSite, Organization, WebApplication, Place, Dataset, BreadcrumbList); `sitemap.xml` and `robots.txt` are generated with the build.
+- **Search-friendly**: real URLs, with an HTML file per page (12 sections, 26 towns, 14 river points and every river gauge) carrying its own title, description, canonical link, Open Graph and Twitter tags, share image and schema.org data (WebSite, Organization, WebApplication, Place, Dataset, BreadcrumbList); `sitemap.xml` and `robots.txt` are generated with the build.
 - **Logo and loading**: a mark drawn from Sri Lanka's real coastline (Natural Earth), app icons for every platform, a branded splash while the app loads, and blur-up placeholders for images.
 - **Safety**: emergency numbers (117, 119, 110, 1990) and opt-in browser notifications for new warnings while the app is open.
 - **Live dashboard** (`/live`): KPI tiles, a running alert feed (new, escalated and cleared signals with times), town and river boards, a refresh countdown, full screen, keep-screen-on and an optional chime for new warnings. A warning banner and a signal badge in the header show on every page.
@@ -31,6 +31,7 @@ the publishers into an interactive map and charts, with no server and no running
 - **Any spot**: tap anywhere on the map for its elevation (Copernicus 90 m DEM), weather, air quality, modelled river flow and flood risk; the spot is kept in the URL so it can be shared.
 - **Air quality page**: US AQI, PM2.5, PM10, ozone, NO₂, dust and UV for every town, with health advice for each AQI band.
 - **Three languages**: the whole interface in English, Sinhala and Tamil, including place and river names, weather descriptions, dates and chart axes. See [`docs/TRANSLATIONS.md`](docs/TRANSLATIONS.md) to help review the translations.
+- **Public API** (`/api/v1/`, documented at `/developers`): weather, air, flood risk, rivers, official gauges and signals as JSON, CSV, GeoJSON and Atom, rebuilt hourly, no key. See [API](#api) below.
 - CSV and PNG export, dark mode, mobile layout, offline banner, installable and readable offline (PWA).
 
 > LankaTwin is unofficial. For warnings follow the Department of Meteorology and the Disaster Management Centre (hotline 117).
@@ -44,12 +45,38 @@ npm test          # unit tests
 npm run brand     # redraw the logo, icons and share images in public/ (needs Playwright)
 ```
 
+## API
+
+A free, read-only API built from the same code as the app, documented with live "Try it" panels at **[lankatwin.github.io/developers](https://lankatwin.github.io/developers)**.
+
+```bash
+curl -s https://lankatwin.github.io/api/v1/snapshot.json
+```
+
+| File | What |
+|---|---|
+| `index.json`, `openapi.json`, `status.json` | Catalogue, OpenAPI 3.1 document, build status of each upstream feed |
+| `snapshot.json` | Island headline: extremes, flood-risk and river levels, gauge and signal counts |
+| `places.json` / `.geojson`, `places/{id}.json` | The 26 towns; everything about one town in one call |
+| `weather.json` / `.csv`, `air.json` / `.csv` | Current weather and air quality for every town |
+| `flood-risk.json` / `.csv` | The 0–100 flood-risk screening score and its parts |
+| `rivers.json` / `.csv` / `.geojson`, `rivers/{id}.json` | GloFAS discharge, forecast peak and rise indicator; full daily series |
+| `gauges.json` / `.csv` / `.geojson`, `gauges/{id}.json` | Irrigation Department gauge levels, status and flood levels; 4 days of readings |
+| `alerts.json` / `.csv`, `alerts.atom`, `alerts.si.atom`, `alerts.ta.atom` | Signals in English, Sinhala and Tamil |
+| `methodology.json`, `sources.json` | Thresholds behind every signal; sources and licences |
+
+**How it works:** GitHub Pages can't run code, so the API is static files. `scripts/static-api.ts` runs at the end of every build: it reads each upstream feed once, shapes the data with the app's own modules (`src/lib/readings.ts`, `src/lib/publicApi.ts`) and writes `dist/api/v1/`. The deploy workflow rebuilds every hour, so however many clients there are, each upstream service gets one request per feed per hour. The endpoint list in `src/lib/apiSpec.ts` drives the files, the OpenAPI document and the docs page. If a feed fails, its files are carried over from the live site and marked `"stale": true`; `status.json` says which feed failed. Set `LT_API_OFFLINE=1` to build without network.
+
 ## Deploy to GitHub Pages
 
 1. In **Settings → Pages**, set **Source** to **GitHub Actions**.
-2. Push to `main`. `.github/workflows/deploy.yml` tests, builds and publishes to `https://lankatwin.github.io/`.
+2. Push to `main`. `.github/workflows/deploy.yml` tests, builds and publishes to `https://lankatwin.github.io/`, and runs again every hour (at :23) to refresh the API. GitHub pauses scheduled workflows after 60 days without repository activity; re-enable it in the **Actions** tab if that happens.
 
-Pull requests run `.github/workflows/ci.yml`: typecheck, unit tests (`npm test`) and a production build.
+Pull requests run `.github/workflows/ci.yml`: typecheck, unit tests (`npm test`), a production build with checks on the API and security policy and `npm audit`. CodeQL scans every change.
+
+## Security
+
+Every page carries a strict Content Security Policy, workflows are pinned to commit SHAs with least-privilege permissions, and dependencies are audited on each change. See [`SECURITY.md`](SECURITY.md) for what is protected and how, and to report a vulnerability privately.
 
 The site is served from the domain root with real paths (`/station/kandy`). The build writes an HTML file for every page with its own title, description, share image and schema.org data, plus `sitemap.xml`, `robots.txt` and a `404.html` that boots the app for any other path (see `scripts/seo-pages.ts`). Old `#/` links are redirected. To serve from a sub-path or another domain, change `base` in `vite.config.ts` and `SITE.url` in `src/lib/seo.ts`.
 

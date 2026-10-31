@@ -8,16 +8,50 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      # Actions are pinned to full commit SHAs (tag in the comment); Dependabot keeps them current.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
+      # No dependency needs an install script; refusing them closes a common supply-chain path.
+      - run: npm ci --ignore-scripts
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      - name: Check the API build
+        run: |
+          test -s dist/api/v1/index.json
+          test -s dist/api/v1/openapi.json
+          test -s dist/api/v1/status.json
+          node -e "const s=require('./dist/api/v1/status.json'); console.log(JSON.stringify(s.feeds))"
+          grep -q 'http-equiv="Content-Security-Policy"' dist/index.html
+
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      # Registry signatures and provenance of every installed package.
+      - run: npm audit signatures
+      # Known vulnerabilities in what ships to browsers (build tools are not deployed).
+      - run: npm audit --omit=dev --audit-level=high
+

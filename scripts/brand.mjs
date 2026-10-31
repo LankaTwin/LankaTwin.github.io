@@ -136,6 +136,7 @@ const CHIPS = {
   '/compare': ['Up to 5 towns', 'Charts'],
   '/alerts': ['Rain', 'Floods', 'Storms', 'Heat', 'Air'],
   '/sources': ['Open data', 'Licences'],
+  '/developers': ['No key', 'JSON · CSV · GeoJSON', 'Hourly', 'OpenAPI'],
   '/about': ['Open source', 'English · සිංහල · தமிழ்'],
 }
 // Shorter copy where a page description is too long for three lines on the image.

@@ -42,6 +42,12 @@ export const OVERLAYS: OverlayDef[] = [
   { id: 'lst', label: 'Land surface temp.', layer: 'MODIS_Terra_Land_Surface_Temp_Day', format: 'image/png', dated: true, maxZoom: 7, note: 'MODIS daytime land surface temperature. Clouds leave gaps.' },
 ]
 
+/** A map chip's text with an optional small unit, built as DOM nodes (never as HTML). */
+function chip(el: HTMLElement, value: string, unit?: string) {
+  const small = unit ? Object.assign(document.createElement('small'), { textContent: unit }) : null
+  el.replaceChildren(value, ...(small ? [small] : []))
+}
+
 function gibsUrl(def: OverlayDef, date: string) {
   const time = def.dated ? `&TIME=${date}` : ''
   return `https://gibs.earthdata.nasa.gov/wms/epsg3857/best/wms.cgi?SERVICE=WMS&REQUEST=GetMap&VERSION=1.3.0&LAYERS=${def.layer}&STYLES=&FORMAT=${encodeURIComponent(def.format)}&TRANSPARENT=TRUE&CRS=EPSG:3857&WIDTH=256&HEIGHT=256&BBOX={bbox-epsg-3857}${time}`
@@ -324,7 +330,7 @@ export default function MapView({ readings, rivers, gauges, force, selected, onS
         el.dataset.active = String(selected === id)
         el.dataset.level = g.level
         const v = g.latest?.level
-        el.innerHTML = selected === id && v != null ? `${fmt(v, 2)}<small>${g.unit}</small>` : ''
+        chip(el, selected === id && v != null ? fmt(v, 2) : '', selected === id && v != null ? g.unit : undefined)
         const label = `${t('gauge.marker', { name: g.name })}: ${v != null ? `${fmt(v, 2)} ${g.unit}, ` : ''}${t(g.stale ? 'gauge.stale' : (`gaugeLevel.${g.level}` as Key))}`
         el.setAttribute('aria-label', label)
         el.title = label
@@ -359,7 +365,7 @@ export default function MapView({ readings, rivers, gauges, force, selected, onS
         el.style.background = bg
         el.style.color = inkOn(bg)
         el.dataset.active = String(selected === id)
-        el.innerHTML = `${fmt(v, met.decimals)}${met.unit && met.unit !== '°' ? `<small>${met.unit}</small>` : met.unit}`
+        chip(el, met.unit === '°' ? `${fmt(v, met.decimals)}°` : fmt(v, met.decimals), met.unit && met.unit !== '°' ? met.unit : undefined)
         const name = placeName(r.station, lang)
         el.setAttribute('aria-label', `${name}: ${metricText(metric, t).label} ${fmt(v, met.decimals)} ${met.unit}`)
         el.title = name
@@ -392,7 +398,7 @@ export default function MapView({ readings, rivers, gauges, force, selected, onS
         el.style.color = inkOn(bg)
         el.dataset.active = String(selected === id)
         // Compact square so rivers don't crowd the town readings; the value shows on hover/selection.
-        el.innerHTML = selected === id ? `≈ ${fmt(rv.today)}<small>m³/s</small>` : '≈'
+        chip(el, selected === id ? `≈ ${fmt(rv.today)}` : '≈', selected === id ? 'm³/s' : undefined)
         const title = t('river.at', riverNames(rv.point, lang))
         el.setAttribute('aria-label', `${title}: ${fmt(rv.today)} m³/s, ${riverLevelText(rv.level, t)}`)
         el.title = title

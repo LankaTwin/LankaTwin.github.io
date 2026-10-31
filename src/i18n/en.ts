@@ -775,6 +775,11 @@ const en = {
   'brand.fullName': 'Lankan Technical Weather Information Network',
   'about.nameTitle': 'What the name means',
   'about.name': 'LankaTwin stands for {full}. TWIN is short for Technical Weather Information Network: technical, because it is built from forecast models, satellite imagery and measured gauge data; weather information, because that is what it gathers and explains; and a network, because it links the readings of many agencies and sources across the island in one place.',
+  'alerts.feedTitle': 'LankaTwin signals for Sri Lanka',
+  'nav.developers': 'API',
+  'dev.title': 'LankaTwin API',
+  'dev.lead': 'Free, open data for Sri Lanka: weather, air quality, flood risk, rivers, official river gauges and signals for every district, as JSON, CSV, GeoJSON and Atom. No key, no sign-up, rebuilt every hour.',
+  'dev.langNote': 'The reference below is in English, as most developer tools are. Every place, river and signal in the data carries its Sinhala and Tamil names.',
 } as const
 
 export type Key = keyof typeof en

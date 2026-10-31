@@ -3,6 +3,8 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import seoPages from './scripts/seo-pages.ts'
+import staticApi from './scripts/static-api.ts'
+import csp from './scripts/csp.ts'
 
 // Served from the root of lankatwin.github.io with real paths (/station/kandy); the build
 // writes an HTML file per page (scripts/seo-pages.ts) and a 404.html fallback for the rest.
@@ -12,6 +14,8 @@ export default defineConfig({
     react(),
     tailwindcss(),
     seoPages(),
+    staticApi(),
+    csp(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'favicon.ico', 'apple-touch-icon.png'],
@@ -47,7 +51,8 @@ export default defineConfig({
         // share images (og/*.jpg) are only fetched by social sites.
         globPatterns: ['index.html', '**/*.{js,css,svg,png,ico,woff2}'],
         navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/(sitemap\.xml|robots\.txt)$/],
+        // Files opened directly (the API, sitemap, security.txt) must never get the app shell.
+        navigateFallbackDenylist: [/^\/(sitemap\.xml|robots\.txt)$/, /^\/api\//, /^\/\.well-known\//],
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         runtimeCaching: [
           {

@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { MetricId } from '../lib/metrics'
-import { detectLang, type Lang } from '../i18n/core'
+import { METRIC_ORDER, type MetricId } from '../lib/metrics'
+import { detectLang, LANGS, type Lang } from '../i18n/core'
 
 export type Overlay = 'none' | 'truecolor' | 'flood' | 'ndvi' | 'imerg' | 'lst'
 export type Theme = 'light' | 'dark'
@@ -51,6 +51,34 @@ export const yesterday = () => {
   return d.toLocaleDateString('en-CA', { timeZone: 'Asia/Colombo' })
 }
 
+const OVERLAYS: Overlay[] = ['none', 'truecolor', 'flood', 'ndvi', 'imerg', 'lst']
+const REFRESH = [5, 10, 15, 30, 60]
+const ID = /^[a-z0-9-]{1,40}$/
+
+/**
+ * Saved settings come back from localStorage, which anything on the device can edit. Keep only
+ * values of the right type and range, so a corrupt or tampered entry can't break the app or
+ * make it poll the sources in a tight loop.
+ */
+export function sanitizeSettings(raw: unknown): Partial<Settings> {
+  if (!raw || typeof raw !== 'object') return {}
+  const p = raw as Record<string, unknown>
+  const out: Partial<Settings> = {}
+  const bool = (k: keyof Settings) => { if (typeof p[k] === 'boolean') (out as Record<string, unknown>)[k] = p[k] }
+  if (LANGS.some((l) => l.id === p.lang)) out.lang = p.lang as Lang
+  if (METRIC_ORDER.includes(p.metric as MetricId)) out.metric = p.metric as MetricId
+  if (OVERLAYS.includes(p.overlay as Overlay)) out.overlay = p.overlay as Overlay
+  if (typeof p.overlayOpacity === 'number' && p.overlayOpacity >= 0.1 && p.overlayOpacity <= 1) out.overlayOpacity = p.overlayOpacity
+  if (typeof p.refreshMinutes === 'number' && REFRESH.includes(p.refreshMinutes)) out.refreshMinutes = p.refreshMinutes
+  const ids = (x: unknown, max: number) => (Array.isArray(x) ? [...new Set(x.filter((v): v is string => typeof v === 'string' && ID.test(v)))].slice(0, max) : undefined)
+  const compare = ids(p.compare, 5)
+  if (compare?.length) out.compare = compare
+  const favorites = ids(p.favorites, 60)
+  if (favorites) out.favorites = favorites
+  for (const k of ['showRivers', 'showStations', 'showFlood', 'showGauges', 'showBasins', 'showFloodAreas', 'notify', 'alertSound'] as const) bool(k)
+  return out
+}
+
 export const useSettings = create<Settings>()(
   persist(
     (set) => ({
@@ -96,6 +124,7 @@ export const useSettings = create<Settings>()(
     {
       name: 'lt-settings',
       version: 1,
+      merge: (persisted, current) => ({ ...current, ...sanitizeSettings(persisted) }),
       partialize: ({ lang, metric, overlay, overlayOpacity, showRivers, showStations, showFlood, showGauges, showBasins, showFloodAreas, refreshMinutes, compare, favorites, notify, alertSound }) =>
         ({ lang, metric, overlay, overlayOpacity, showRivers, showStations, showFlood, showGauges, showBasins, showFloodAreas, refreshMinutes, compare, favorites, notify, alertSound }),
     },

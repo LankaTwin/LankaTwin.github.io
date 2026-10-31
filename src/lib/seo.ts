@@ -90,6 +90,7 @@ const SECTIONS: [string, string][] = [
   ['Compare places', '/compare'],
   ['Signals and alerts', '/alerts'],
   ['Data sources', '/sources'],
+  ['Developer API', '/developers'],
   ['About', '/about'],
 ]
 
@@ -186,6 +187,35 @@ const S: Record<string, Section> = {
     h1: 'Data sources',
     description: 'Where LankaTwin’s data comes from — Open-Meteo, Copernicus, ECMWF, NASA, Sri Lanka’s Irrigation Department, OpenStreetMap — with refresh rates and licences.',
     image: '/og/sources.jpg', changefreq: 'monthly', priority: 0.4,
+  },
+  '/developers': {
+    title: 'LankaTwin API — open weather, flood and air data for Sri Lanka',
+    h1: 'LankaTwin API',
+    description: 'Free JSON, CSV, GeoJSON and Atom feeds of weather, air, flood risk, rivers, river gauges and signals for every district of Sri Lanka. No key, hourly.',
+    image: '/og/developers.jpg', changefreq: 'weekly', priority: 0.6,
+    ld: () => [{
+      '@type': 'WebAPI',
+      name: 'LankaTwin API',
+      description: 'Static, keyless, CORS-open API with hourly weather, air quality, flood risk, river discharge, river gauge and signal data for Sri Lanka.',
+      documentation: `${SITE.url}/developers`,
+      termsOfService: `${SITE.url}/developers#licence`,
+      provider: { '@id': `${SITE.url}/#org` },
+      url: `${SITE.url}/api/v1/index.json`,
+    }, {
+      '@type': 'Dataset',
+      name: 'LankaTwin hourly weather, flood and air data for Sri Lanka',
+      description: 'Hourly snapshot of modelled weather, air quality, flood-risk scores, river discharge and official Irrigation Department river gauge readings for the district capitals of Sri Lanka.',
+      url: `${SITE.url}/developers`,
+      license: 'https://creativecommons.org/licenses/by/4.0/',
+      isAccessibleForFree: true,
+      spatialCoverage: { '@type': 'Place', name: 'Sri Lanka' },
+      creator: { '@id': `${SITE.url}/#org` },
+      distribution: [
+        { '@type': 'DataDownload', encodingFormat: 'application/json', contentUrl: `${SITE.url}/api/v1/weather.json` },
+        { '@type': 'DataDownload', encodingFormat: 'text/csv', contentUrl: `${SITE.url}/api/v1/weather.csv` },
+        { '@type': 'DataDownload', encodingFormat: 'application/geo+json', contentUrl: `${SITE.url}/api/v1/gauges.geojson` },
+      ],
+    }],
   },
   '/about': {
     title: 'About LankaTwin — Lankan Technical Weather Information Network',

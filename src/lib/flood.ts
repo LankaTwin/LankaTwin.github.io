@@ -2,7 +2,7 @@
 // rain (past and next 24 h), how far the nearest river is running above its recent
 // median, and how low-lying the ground is. It is a heads-up, not a flood forecast;
 // the Irrigation Department and DMC issue the official ones.
-import type { RiverReading, StationReading } from '../hooks/useLiveData'
+import type { RiverReading, StationReading } from './readings'
 import { riversNear } from './places'
 
 export type FloodLevel = 'low' | 'moderate' | 'high' | 'very-high'
