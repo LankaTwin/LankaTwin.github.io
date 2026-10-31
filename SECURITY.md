@@ -39,8 +39,8 @@ data (please open a normal issue for wrong data).
 - **Defensive clients**: HTTPS only, no cookies sent to data sources, timeouts on every request,
   answers must be JSON objects, and saved settings are validated when read back.
 - **Supply chain**: GitHub Actions pinned to commit SHAs with least-privilege permissions,
-  `npm ci --ignore-scripts`, `npm audit` and registry signature checks, dependency review on pull
-  requests, CodeQL code scanning, and Dependabot for npm and Actions updates.
+  `npm ci --ignore-scripts`, `npm audit` and registry signature checks on every change, CodeQL
+  code scanning, and Dependabot for npm and Actions updates.
 
 ## Limits of a static host
 

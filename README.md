@@ -72,7 +72,7 @@ curl -s https://lankatwin.github.io/api/v1/snapshot.json
 1. In **Settings → Pages**, set **Source** to **GitHub Actions**.
 2. Push to `main`. `.github/workflows/deploy.yml` tests, builds and publishes to `https://lankatwin.github.io/`, and runs again every hour (at :23) to refresh the API. GitHub pauses scheduled workflows after 60 days without repository activity; re-enable it in the **Actions** tab if that happens.
 
-Pull requests run `.github/workflows/ci.yml`: typecheck, unit tests (`npm test`), a production build with checks on the API and security policy, `npm audit` and dependency review. CodeQL scans every change.
+Pull requests run `.github/workflows/ci.yml`: typecheck, unit tests (`npm test`), a production build with checks on the API and security policy and `npm audit`. CodeQL scans every change.
 
 ## Security
 
