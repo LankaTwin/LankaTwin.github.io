@@ -339,9 +339,10 @@ function DailyStrip({ data }: { data?: Wx }) {
             <div className="text-lg font-bold">{fmt(v('temperature_2m_max', i))}° <span className="text-sm font-medium text-muted">{fmt(v('temperature_2m_min', i))}°</span></div>
             <div className="text-xs"><span className="font-semibold text-lagoon">{fmt(v('precipitation_sum', i), 1)} mm</span> <span className="text-muted">· {fmt(v('precipitation_probability_max', i))}%</span></div>
             <div className="text-[11px] text-muted">{t('place.dailySub', { uv: fmt(v('uv_index_max', i)), g: fmt(v('wind_gusts_10m_max', i)) })}</div>
-            <div className="mt-1 flex gap-2 text-[11px] text-muted">
-              <span className="inline-flex items-center gap-0.5"><Sunrise className="size-3" aria-label={t('place.sunrise')} />{sun('sunrise', i)}</span>
-              <span className="inline-flex items-center gap-0.5"><Sunset className="size-3" aria-label={t('place.sunset')} />{sun('sunset', i)}</span>
+            {/* Side by side where the column is wide enough, one under the other on phones. */}
+            <div className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-[11px] tabular-nums text-muted">
+              <span className="inline-flex items-center gap-0.5 whitespace-nowrap"><Sunrise className="size-3 shrink-0" aria-label={t('place.sunrise')} />{sun('sunrise', i)}</span>
+              <span className="inline-flex items-center gap-0.5 whitespace-nowrap"><Sunset className="size-3 shrink-0" aria-label={t('place.sunset')} />{sun('sunset', i)}</span>
             </div>
           </li>
         ))}
