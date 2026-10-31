@@ -27,6 +27,7 @@ const PAGES: [Key, string, string][] = [
   ['nav.signals', '/alerts', 'alerts warnings emergency numbers notifications'],
   ['nav.sources', '/sources', 'data licences attribution'],
   ['nav.about', '/about', 'settings roadmap help language'],
+  ['nav.developers', '/developers', 'api developers docs documentation json csv geojson atom feed openapi data download endpoint'],
 ]
 
 export const SEARCH_INDEX: SearchItem[] = [
