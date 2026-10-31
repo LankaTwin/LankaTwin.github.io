@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom'
 import Layout from './components/Layout'
 import Dashboard from './pages/Dashboard'
 import { Skeleton } from './components/ui'
@@ -19,6 +19,7 @@ const FloodsPage = lazy(() => import('./pages/FloodsPage'))
 const AirPage = lazy(() => import('./pages/AirPage'))
 const LivePage = lazy(() => import('./pages/LivePage'))
 const GaugesPage = lazy(() => import('./pages/GaugesPage'))
+const DevelopersPage = lazy(() => import('./pages/DevelopersPage'))
 
 const wrap = (el: React.ReactNode) => <Suspense fallback={<div className="mx-auto max-w-6xl p-6"><Skeleton className="h-64" /></div>}>{el}</Suspense>
 
@@ -58,6 +59,10 @@ const router = createBrowserRouter([
           { path: 'alerts', element: wrap(<AlertsPage />) },
           { path: 'sources', element: wrap(<SourcesPage />) },
           { path: 'about', element: wrap(<AboutPage />) },
+          { path: 'developers', element: wrap(<DevelopersPage />) },
+          // The API's files live under /api/v1/; anything else there (or /api itself) means the docs.
+          { path: 'api/*', element: <Navigate to="/developers" replace /> },
+          { path: 'api', element: <Navigate to="/developers" replace /> },
           { path: '*', element: <NotFound /> },
         ],
       },

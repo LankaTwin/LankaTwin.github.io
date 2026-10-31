@@ -10,7 +10,7 @@ const pages = allPages(gauges)
 
 describe('page metadata', () => {
   it('covers every section, town, river point and gauge', () => {
-    expect(pages).toHaveLength(11 + STATIONS.length + RIVER_POINTS.length + gauges.length)
+    expect(pages).toHaveLength(12 + STATIONS.length + RIVER_POINTS.length + gauges.length)
     for (const p of ['/', '/live', '/floods', '/gauges', '/rivers', '/air', '/stations', '/compare', '/alerts', '/sources', '/about']) expect(pageMeta(p)?.path).toBe(p)
   })
 

@@ -1,4 +1,6 @@
 // Thin client-side connectors. Every source here is public, keyless and CORS-enabled.
+// Requests carry no cookies and only the site's origin as referrer; answers must be JSON
+// objects or arrays, and an upstream's error text is shortened before anything shows it.
 import type { RiverPoint, Station } from './places'
 
 const TZ = 'Asia/Colombo'
@@ -14,16 +16,19 @@ export async function fetchJson<T>(source: string, url: string, signal?: AbortSi
   const timer = setTimeout(() => ctrl.abort(), timeoutMs)
   signal?.addEventListener('abort', () => ctrl.abort())
   try {
-    const res = await fetch(url, { signal: ctrl.signal })
+    if (!url.startsWith('https://')) throw new SourceError(source, 'Only HTTPS sources are allowed')
+    const res = await fetch(url, { signal: ctrl.signal, credentials: 'omit', referrerPolicy: 'strict-origin-when-cross-origin' })
     if (!res.ok) {
       let reason = `${res.status} ${res.statusText}`
       try {
         const body = await res.json()
-        if (body?.reason) reason = body.reason
+        if (typeof body?.reason === 'string') reason = body.reason.slice(0, 200)
       } catch { /* not JSON */ }
       throw new SourceError(source, reason, res.status)
     }
-    return (await res.json()) as T
+    const data: unknown = await res.json()
+    if (data === null || typeof data !== 'object') throw new SourceError(source, 'Unexpected answer (not a JSON object)')
+    return data as T
   } catch (e) {
     if (e instanceof SourceError) throw e
     if ((e as Error).name === 'AbortError') throw new SourceError(source, 'The request timed out', undefined, 'timeout')

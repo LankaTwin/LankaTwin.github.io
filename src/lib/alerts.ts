@@ -1,4 +1,4 @@
-import type { RiverReading, StationReading } from '../hooks/useLiveData'
+import type { RiverReading, StationReading } from './readings'
 import { fmt, riverLevelText } from './metrics'
 import { placeName, riverNames } from './places'
 import { tFor, type Key, type Lang, type T } from '../i18n/core'

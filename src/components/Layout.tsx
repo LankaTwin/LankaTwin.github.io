@@ -24,6 +24,7 @@ const NAV: { to: string; label: Key; end?: boolean; extra?: boolean }[] = [
   { to: '/compare', label: 'nav.compare', extra: true },
   { to: '/alerts', label: 'nav.signals', extra: true },
   { to: '/sources', label: 'nav.sources', extra: true },
+  { to: '/developers', label: 'nav.developers', extra: true },
   { to: '/about', label: 'nav.about', extra: true },
 ]
 

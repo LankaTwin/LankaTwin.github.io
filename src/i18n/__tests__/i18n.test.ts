@@ -9,7 +9,7 @@ const holes = (s: string) => [...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort
 const SINHALA = /[඀-෿]/
 const TAMIL = /[஀-௿]/
 // Values that are the same in every language: only placeholders, units, codes and brand names.
-const isUniversal = (v: string) => /^[\s\W\d]*$/.test(v.replace(/\{\w+\}|US AQI|AQI|PM2\.5|µg\/m³|°C|LankaTwin/g, ''))
+const isUniversal = (v: string) => /^[\s\W\d]*$/.test(v.replace(/\{\w+\}|US AQI|AQI|PM2\.5|µg\/m³|°C|LankaTwin|API/g, ''))
 
 describe('translations', () => {
   for (const lang of ['si', 'ta'] as Lang[]) {
