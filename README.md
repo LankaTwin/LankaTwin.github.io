@@ -31,6 +31,8 @@ the publishers into an interactive map and charts, with no server and no running
 - **Any spot**: tap anywhere on the map for its elevation (Copernicus 90 m DEM), weather, air quality, modelled river flow and flood risk; the spot is kept in the URL so it can be shared.
 - **Air quality page**: US AQI, PM2.5, PM10, ozone, NO₂, dust and UV for every town, with health advice for each AQI band.
 - **Three languages**: the whole interface in English, Sinhala and Tamil, including place and river names, weather descriptions, dates and chart axes. See [`docs/TRANSLATIONS.md`](docs/TRANSLATIONS.md) to help review the translations.
+- **Forecast honesty**: each place page compares six global models (ECMWF, GFS, ICON, UKMO, ARPEGE, JMA) day by day with a high/medium/low agreement label, and scores the forecasts made 1–3 days ahead over the past week (rain-or-dry hits, rain and temperature error). No forecast is 100% accurate; the app shows how far to trust each one (`src/lib/forecastQuality.ts`).
+- **Sea conditions** for coastal towns: wave height and WMO sea state, swell, wave period and direction, sea temperature and a 5-day wave outlook (Open-Meteo Marine).
 - **Public API** (`/api/v1/`, documented at `/developers`): weather, air, flood risk, rivers, official gauges and signals as JSON, CSV, GeoJSON and Atom, rebuilt hourly, no key. See [API](#api) below.
 - CSV and PNG export, dark mode, mobile layout, offline banner, installable and readable offline (PWA).
 

@@ -44,6 +44,22 @@ export const SOURCES: DataSource[] = [
     license: 'CC BY 4.0', url: 'https://open-meteo.com/en/docs/historical-weather-api',
   },
   {
+    id: 'models', name: 'Forecast API, model by model', provider: 'Open-Meteo / ECMWF, NOAA, DWD, UK Met Office, Météo-France, JMA', status: 'live',
+    provides: 'Daily rain and temperature from six global models, compared for forecast confidence', refresh: 'Every 3–12 hours by model', resolution: '~11–40 km',
+    license: 'CC BY 4.0', url: 'https://open-meteo.com/en/docs',
+  },
+  {
+    id: 'previous', name: 'Previous Runs API', provider: 'Open-Meteo', status: 'live',
+    provides: 'What was forecast 1–3 days earlier, for the forecast track record', refresh: 'Hourly', resolution: 'Best-available model blend',
+    license: 'CC BY 4.0', url: 'https://open-meteo.com/en/docs/previous-runs-api',
+  },
+  {
+    id: 'marine', name: 'Marine Weather API', provider: 'Open-Meteo / ECMWF WAM, DWD, NOAA', status: 'live',
+    provides: 'Wave height, direction and period, swell and sea surface temperature for coastal towns', refresh: 'Every 6–12 hours', resolution: '~5–25 km',
+    license: 'CC BY 4.0', url: 'https://open-meteo.com/en/docs/marine-weather-api',
+    note: 'Open-sea model values; they do not describe harbours, lagoons or reefs.',
+  },
+  {
     id: 'power', name: 'POWER Daily API', provider: 'NASA Langley', status: 'live',
     provides: 'All-sky and clear-sky solar irradiance (kWh/m²/day) for energy context', refresh: 'Daily, a few days of lag',
     resolution: '0.5° × 0.625°', license: 'Public domain (NASA)', url: 'https://power.larc.nasa.gov/docs/services/api/',
