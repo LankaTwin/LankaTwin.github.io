@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useSettings } from '../stores/settings'
 import Scene from '../components/Scene'
 import { SCENES } from '../lib/scenes'
+import { MODELS } from '../lib/forecastQuality'
 import { REPO_URL } from '../components/Layout'
 import { useTitle } from '../hooks/useApp'
 import { LANGS, rich, type Key, type Lang } from '../i18n/core'
@@ -18,6 +19,7 @@ const ROADMAP: { phase: 'Now' | 'Next' | 'Later'; items: [Key, boolean][] }[] = 
     ['road.photos', true],
     ['road.space', true],
     ['road.embed', true],
+    ['road.quality', true],
     ['road.i18n', true],
     ['road.floods', true],
     ['road.spot', true],
@@ -81,6 +83,9 @@ export default function AboutPage() {
         <li>{rich(t('about.shortcutNear'), { b: <b>{t('dash.nearMe')}</b> })}</li>
         <li>{rich(t('about.shortcutStar'), { b: <b>{t('about.star')}</b> })}</li>
       </ul>
+
+      <h2 id="accuracy">{t('about.accuracyTitle')}</h2>
+      <p>{t('about.accuracy', { n: MODELS.length })}</p>
 
       <h2>{t('about.imagesTitle')}</h2>
       <p>{t('about.images')}</p>

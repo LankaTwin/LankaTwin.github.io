@@ -11,6 +11,7 @@ import WeatherIcon from '../components/WeatherIcon'
 import { skyFor } from '../components/Landscape'
 import { useTitle } from '../hooks/useApp'
 import SeasonCard from '../components/SeasonCard'
+import { ModelAgreement, SeaConditions, TrackRecord } from '../components/ForecastQuality'
 import { rich, type Key } from '../i18n/core'
 import { useT } from '../i18n/useT'
 import { fetchAirSeries, fetchArchiveDaily, fetchSolar, fetchStationSeries, series } from '../lib/api'
@@ -149,6 +150,14 @@ export default function StationPage() {
       <HourlyStrip data={wx.data} nowWall={nowWall} />
 
       <DailyStrip data={wx.data} />
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div className="min-w-0"><ModelAgreement station={st} /></div>
+        <div className="min-w-0 space-y-4">
+          <TrackRecord station={st} />
+          <SeaConditions station={st} />
+        </div>
+      </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <SeasonCard className="p-4" />

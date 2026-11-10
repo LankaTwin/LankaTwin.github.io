@@ -109,6 +109,39 @@ export async function fetchMultiSeries(stations: Station[], variable: string, pa
   return asArray(await fetchJson<OMResponse | OMResponse[]>('Open-Meteo Forecast', url, signal))
 }
 
+// ---------- Forecast quality: model comparison and past forecasts ----------
+
+/** Daily rain and maximum temperature from each of the given global models, 7 days ahead. */
+export async function fetchModelSpread(s: Station, models: string[], signal?: AbortSignal) {
+  const url = `https://api.open-meteo.com/v1/forecast?${qs({
+    latitude: s.lat, longitude: s.lon,
+    daily: 'precipitation_sum,temperature_2m_max',
+    forecast_days: 7, timezone: TZ, models: models.join(','),
+  })}`
+  return fetchJson<OMResponse>('Open-Meteo Forecast', url, signal)
+}
+
+/** The past week hour by hour: what happened, and what was forecast 1, 2 and 3 days before. */
+export async function fetchPastForecasts(s: Station, signal?: AbortSignal) {
+  const vars = ['temperature_2m', 'precipitation'].flatMap((v) => [v, ...[1, 2, 3].map((d) => `${v}_previous_day${d}`)])
+  const url = `https://previous-runs-api.open-meteo.com/v1/forecast?${qs({
+    latitude: s.lat, longitude: s.lon, hourly: vars.join(','), past_days: 7, forecast_days: 1, timezone: TZ,
+  })}`
+  return fetchJson<OMResponse>('Open-Meteo Previous Runs', url, signal)
+}
+
+// ---------- Open-Meteo marine (waves) ----------
+
+export async function fetchMarine(p: { lat: number; lon: number }, signal?: AbortSignal) {
+  const url = `https://marine-api.open-meteo.com/v1/marine?${qs({
+    latitude: p.lat, longitude: p.lon,
+    current: 'wave_height,wave_direction,wave_period,swell_wave_height,swell_wave_direction,swell_wave_period,wind_wave_height,sea_surface_temperature',
+    daily: 'wave_height_max,wave_direction_dominant,wave_period_max',
+    forecast_days: 5, timezone: TZ,
+  })}`
+  return fetchJson<OMResponse>('Open-Meteo Marine', url, signal)
+}
+
 // ---------- Open-Meteo air quality (CAMS) ----------
 
 export async function fetchAirNow(stations: Station[], signal?: AbortSignal) {

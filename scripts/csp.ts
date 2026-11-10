@@ -12,7 +12,7 @@ export const CSP_HOSTS = {
   // fetch() targets: weather/air/flood/archive/elevation models, solar, gauges, place photos, basemap style and tiles.
   connect: [
     'https://api.open-meteo.com', 'https://air-quality-api.open-meteo.com', 'https://flood-api.open-meteo.com',
-    'https://archive-api.open-meteo.com', 'https://power.larc.nasa.gov', 'https://services3.arcgis.com',
+    'https://archive-api.open-meteo.com', 'https://previous-runs-api.open-meteo.com', 'https://marine-api.open-meteo.com', 'https://power.larc.nasa.gov', 'https://services3.arcgis.com',
     'https://en.wikipedia.org', 'https://basemaps.cartocdn.com', 'https://tiles.basemaps.cartocdn.com',
     'https://gibs.earthdata.nasa.gov', 'https://upload.wikimedia.org', 'https://res.cloudinary.com',
   ],
